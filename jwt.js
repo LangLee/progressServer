@@ -20,7 +20,7 @@ export const verify = (req, res, next) => {
 
   jwt.verify(token, secretKey, (error, data) => {
 		if (error) {
-			res.json({ success: false, message: 'token验证失败' });
+			res.status(401).send({ success: false, message: '登录信息已失效，请重新登录' });
 		} else {
 			req._id = data._id;
 			next();

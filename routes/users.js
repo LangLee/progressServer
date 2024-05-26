@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import User from '../model/user'
 const jwt = require('../jwt');
+// import md5 from 'md5';
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
@@ -14,7 +15,7 @@ router.post('/login', (req, res)=>{
   .exec()
   .then(data=>{
     if (data) {
-      if (data.password === md5(req.body.password)) {
+      if (data.password === req.body.password) {
         res.json({
           success: true, 
           message: '登录成功',
@@ -42,11 +43,11 @@ router.post('/register', (req, res)=>{
         message: '用户已经存在'
       });
     } else {
-      User.create({name:req.body.name, password:md5(req.body.password)}).then((data)=>{
+      User.create({name:req.body.name, password: req.body.password}).then((data)=>{
         res.json({
           success: true, 
           message: '注册成功',
-          data: data,// 生成token，并传入用户_id
+          data: data
         });
       })
     }
