@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
-var Schema = mongoose.Schema
+const Schema = mongoose.Schema
 
-// 书籍
-var anchorSchema = Schema({
+// 目录
+const AnchorSchema = Schema({
+    id: String,
     itemIndex: Number,
     level: Number,
     originalLevel: Number,
@@ -10,6 +11,8 @@ var anchorSchema = Schema({
     textContent: String
 })
 
-const Anchor = mongoose.model('anchor', anchorSchema, 'anchor')
+const Anchors = [AnchorSchema];
+const Anchor = mongoose.model('anchor', AnchorSchema, 'anchor')
 
 export default Anchor;
+export {AnchorSchema, Anchors}

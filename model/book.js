@@ -1,7 +1,7 @@
 // import Anchor from './anchor';
 import mongoose from 'mongoose';
 var Schema = mongoose.Schema
-
+import { Anchors } from './anchor';
 // 书籍
 var bookSchema = Schema({
     title:{
@@ -20,7 +20,8 @@ var bookSchema = Schema({
     createTime: {
         type: Date,
         default: Date.now
-    }
+    },
+    anchors: Anchors
 })
 
 const Book = mongoose.model('book', bookSchema, "book")

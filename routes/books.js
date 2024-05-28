@@ -56,11 +56,11 @@ router.post('/createBook', jwt.verify, (req, res) => {
 });
 // 更新书籍
 router.post('/updateBook', jwt.verify, (req, res) => {
-  let { id, content } = req.body || {};
+  let { id, content, anchors } = req.body || {};
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { content: content}}).exec().then((data) => {
+  Book.findByIdAndUpdate(id, { $set: { content, anchors}}).exec().then((data) => {
     if (data) {
       res.json({
         success: true,
