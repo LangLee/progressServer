@@ -8,7 +8,7 @@ router.get('/', function (req, res, next) {
 });
 // 获取书籍列表
 router.get('/getBooks', jwt.verify, (req, res) => {
-  Book.find().select('title')
+  Book.find().select('title createTime').sort({createTime: 'asc'})
     .exec()
     .then(data => {
       if (data) {
@@ -101,6 +101,23 @@ router.post('/removeBook', jwt.verify, (req, res) => {
     } else {
       res.json({ success: false, message: '删除失败！' });
     }
+  });
+});
+// 删除书籍
+router.get('/searchBook', jwt.verify, (req, res) => {
+  let { key="" } = req.query || {};
+  Book.find({'$or': [{'title': {$regex: key}}, {'anchors': {$elemMatch: {'textContent': {$regex: key}}}}]}).exec().then((data) => {
+    let books = [];
+    if (data && data.length > 0) {
+      books = data.map(({id, title, anchors}) => {
+        let filterAnchors = anchors.filter(({textContent})=>textContent.indexOf(key) !== -1).map(({id, textContent})=>({id, textContent}));
+        return {id, title, anchors: filterAnchors}
+      })
+    }
+    res.json({
+      success: true,
+      data: books
+    });
   });
 });
 export default router;
