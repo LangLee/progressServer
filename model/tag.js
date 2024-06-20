@@ -1,11 +1,15 @@
+import { type } from 'express/lib/response';
 import mongoose from 'mongoose';
 var Schema = mongoose.Schema
 // 标签
 var TagSchema = Schema({
-    title:{
+    name: {
         type: String,
-        required: true,
-        default: '新建标签'
+        required: true
+    },
+    code:{
+        type: String,
+        required: true
     },
     color: String,
     createTime: {

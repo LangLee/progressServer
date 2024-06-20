@@ -22,7 +22,7 @@ export const verify = (req, res, next) => {
 		if (error) {
 			res.status(401).send({ success: false, message: '登录信息已失效，请重新登录' });
 		} else {
-			req._id = data._id;
+			req._userId = data._id;
 			next();
 		}
 	});

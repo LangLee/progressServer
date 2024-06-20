@@ -6,6 +6,7 @@ import logger from "morgan";
 import indexRouter from "./routes/index";
 import usersRouter from "./routes/users";
 import booksRouter from "./routes/books";
+import groupsRouter from "./routes/groups";
 import connectDB from "./model/db";
 import cors from "cors";
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.static(path.join(__dirname, './public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/books', booksRouter);
+app.use('/groups', groupsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

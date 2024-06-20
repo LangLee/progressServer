@@ -11,19 +11,32 @@ var bookSchema = Schema({
     },
     image:String,
     description:String,
-    author:String,
+    author: {
+        type: Schema.Types.ObjectId,
+        ref: 'user'
+    },
     content: {
         type: String,
         default: ''
     },
-    type: String,
+    type: {
+        type: String,
+        enum: ['markdown', 'text', 'drawing', 'todoList']
+    },
     createTime: {
         type: Date,
         default: Date.now
     },
-    anchors: Anchors
+    anchors: Anchors,
+    category: {
+        type: Schema.Types.ObjectId,
+        ref: 'group'
+    }
 })
-
+// bookSchema.virtual('formatCreateTime').get(function() {
+//   return this.createTime.toISOString();
+// });
+ 
 const Book = mongoose.model('book', bookSchema, "book")
 
 export default Book;

@@ -1,6 +1,8 @@
 import express from 'express';
 const router = express.Router();
 import Book from '../model/book'
+import dateFormatter from '../utils/dateFormat';
+import { story } from '../template/book';
 const jwt = require('../jwt');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -8,17 +10,26 @@ router.get('/', function (req, res, next) {
 });
 // 获取书籍列表
 router.get('/getBooks', jwt.verify, (req, res) => {
-  Book.find().select('title createTime').sort({createTime: 'asc'})
+  let {sort={createTime: 'desc'}} = req.query;
+  let userId = req._userId;
+  Book.find({author: userId}).select('title createTime category type').sort(sort)
     .exec()
     .then(data => {
-      if (data) {
-        res.json({
-          success: true,
-          data: data
-        });
-      } else {
-        res.json({ success: false, message: '' });
-      }
+      let books = data && data.length && data.map(({_id, title, createTime, category, type})=>{ 
+        return {
+          _id,
+          title,
+          createTime: dateFormatter.format(new Date(createTime)),
+          category,
+          type
+        }
+      })
+      res.json({
+        success: true,
+        data: books
+      });
+    }).catch(err => {
+      res.json({ success: false, message: err });
     });
 });
 // 获取书籍
@@ -42,8 +53,10 @@ router.get('/getBookById', jwt.verify, (req, res) => {
 });
 // 创建书籍
 router.post('/createBook', jwt.verify, (req, res) => {
-  let { title, content } = res.body || {};
-  Book.create({ title, content }).then((data) => {
+  let { title, content, type, category } = req.body || {};
+  let userId = req._userId;
+  content = content || story;
+  Book.create({ title, content, author: userId, type, category }).then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -73,11 +86,11 @@ router.post('/updateBook', jwt.verify, (req, res) => {
 });
 // 更新书籍
 router.post('/updateBookTitle', jwt.verify, (req, res) => {
-  let { id, title } = req.body || {};
+  let { id, title, type, category } = req.body || {};
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { title: title}}).exec().then((data) => {
+  Book.findByIdAndUpdate(id, { $set: { title, type, category}}).exec().then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -103,7 +116,7 @@ router.post('/removeBook', jwt.verify, (req, res) => {
     }
   });
 });
-// 删除书籍
+// 查询书籍
 router.get('/searchBook', jwt.verify, (req, res) => {
   let { key="" } = req.query || {};
   Book.find({'$or': [{'title': {$regex: key}}, {'anchors': {$elemMatch: {'textContent': {$regex: key}}}}]}).exec().then((data) => {
