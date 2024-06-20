@@ -7,6 +7,7 @@ import indexRouter from "./routes/index";
 import usersRouter from "./routes/users";
 import booksRouter from "./routes/books";
 import groupsRouter from "./routes/groups";
+import aiRouter from "./routes/ai";
 import connectDB from "./model/db";
 import cors from "cors";
 const app = express();
@@ -26,6 +27,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/books', booksRouter);
 app.use('/groups', groupsRouter);
+app.use('/ai', aiRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

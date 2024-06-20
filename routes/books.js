@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import Book from '../model/book'
 import dateFormatter from '../utils/dateFormat';
-import { story } from '../template/book';
+import { story, storyWithoutTitle } from '../template/book';
 const jwt = require('../jwt');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -55,7 +55,16 @@ router.get('/getBookById', jwt.verify, (req, res) => {
 router.post('/createBook', jwt.verify, (req, res) => {
   let { title, content, type, category } = req.body || {};
   let userId = req._userId;
-  content = content || story;
+  let template;
+  switch (type) {
+    case 'text':
+      template = storyWithoutTitle
+      break;
+    default:
+      template = story;
+      break;
+  }
+  content = content || template;
   Book.create({ title, content, author: userId, type, category }).then((data) => {
     if (data) {
       res.json({
