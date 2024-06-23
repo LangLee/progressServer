@@ -1484,6 +1484,11 @@ crypt@0.0.2:
   resolved "http://192.168.55.132:4873/crypt/-/crypt-0.0.2.tgz#88d7ff7ec0dfb86f713dc87bbb42d044d3e6c41b"
   integrity sha1-iNf/fsDfuG9xPch7u0LQRNPmxBs=
 
+crypto@^1.0.1:
+  version "1.0.1"
+  resolved "http://192.168.55.132:4873/crypto/-/crypto-1.0.1.tgz#2af1b7cad8175d24c8a1b0778255794a21803037"
+  integrity sha1-KvG3ytgXXSTIobB3glV5SiGAMDc=
+
 css-parse@1.0.4:
   version "1.0.4"
   resolved "http://192.168.55.132:4873/css-parse/-/css-parse-1.0.4.tgz#38b0503fbf9da9f54e9c1dbda60e145c77117bdd"

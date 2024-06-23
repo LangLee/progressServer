@@ -19,6 +19,10 @@ var userSchema = Schema({
                 msg: '密码长度必须大于6位',
             }]
     },
+    administrator: {
+        type: Boolean,
+        default: false
+    }
 })
 
 
