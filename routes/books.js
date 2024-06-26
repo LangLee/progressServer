@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import Book from '../model/book'
 import dateFormatter from '../utils/dateFormat';
-import { story, storyWithoutTitle } from '../template/book';
+import { story, storyWithoutTitle, helloworld } from '../template/book';
 const jwt = require('../jwt');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -10,12 +10,12 @@ router.get('/', function (req, res, next) {
 });
 // 获取书籍列表
 router.get('/getBooks', jwt.verify, (req, res) => {
-  let {sort={createTime: 'desc'}} = req.query;
+  let { sort = { createTime: 'desc' } } = req.query;
   let userId = req._userId;
-  Book.find({author: userId}).select('title createTime category type').sort(sort)
+  Book.find({ author: userId }).select('title createTime category type').sort(sort)
     .exec()
     .then(data => {
-      let books = data && data.length && data.map(({_id, title, createTime, category, type})=>{ 
+      let books = data && data.length && data.map(({ _id, title, createTime, category, type }) => {
         return {
           _id,
           title,
@@ -41,7 +41,7 @@ router.get('/getBookById', jwt.verify, (req, res) => {
   }
   Book.findById(req.query.id)
     .exec().then((data) => {
-      if(data) {
+      if (data) {
         res.json({
           success: true,
           data: data
@@ -59,6 +59,9 @@ router.post('/createBook', jwt.verify, (req, res) => {
   switch (type) {
     case 'text':
       template = storyWithoutTitle
+      break;
+    case 'code':
+      template = helloworld;
       break;
     default:
       template = story;
@@ -82,7 +85,7 @@ router.post('/updateBook', jwt.verify, (req, res) => {
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { content, anchors}}).exec().then((data) => {
+  Book.findByIdAndUpdate(id, { $set: { content, anchors } }).exec().then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -99,7 +102,7 @@ router.post('/updateBookTitle', jwt.verify, (req, res) => {
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { title, type, category}}).exec().then((data) => {
+  Book.findByIdAndUpdate(id, { $set: { title, type, category } }).exec().then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -127,13 +130,13 @@ router.post('/removeBook', jwt.verify, (req, res) => {
 });
 // 查询书籍
 router.get('/searchBook', jwt.verify, (req, res) => {
-  let { key="" } = req.query || {};
-  Book.find({'$or': [{'title': {$regex: key}}, {'anchors': {$elemMatch: {'textContent': {$regex: key}}}}]}).exec().then((data) => {
+  let { key = "" } = req.query || {};
+  Book.find({ '$or': [{ 'title': { $regex: key } }, { 'anchors': { $elemMatch: { 'textContent': { $regex: key } } } }] }).exec().then((data) => {
     let books = [];
     if (data && data.length > 0) {
-      books = data.map(({id, title, anchors}) => {
-        let filterAnchors = anchors.filter(({textContent})=>textContent.indexOf(key) !== -1).map(({id, textContent})=>({id, textContent}));
-        return {id, title, anchors: filterAnchors}
+      books = data.map(({ id, title, anchors }) => {
+        let filterAnchors = anchors.filter(({ textContent }) => textContent.indexOf(key) !== -1).map(({ id, textContent }) => ({ id, textContent }));
+        return { id, title, anchors: filterAnchors }
       })
     }
     res.json({

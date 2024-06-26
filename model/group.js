@@ -14,6 +14,9 @@ const GroupSchema = new Schema({
     description: {
         type: String
     },
+    icon: {
+        type: String
+    },
     createTime: {
         type: Date,
         default: Date.now

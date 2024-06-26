@@ -2,6 +2,7 @@
 import mongoose from 'mongoose';
 var Schema = mongoose.Schema
 import { Anchors } from './anchor';
+import { BOOK_TYPES } from '../common/constants';
 // 书籍
 var bookSchema = Schema({
     title:{
@@ -21,7 +22,7 @@ var bookSchema = Schema({
     },
     type: {
         type: String,
-        enum: ['markdown', 'text', 'drawing', 'todoList']
+        enum: BOOK_TYPES
     },
     createTime: {
         type: Date,
@@ -31,6 +32,10 @@ var bookSchema = Schema({
     category: {
         type: Schema.Types.ObjectId,
         ref: 'group'
+    },
+    url: {
+        type: String,
+        default: ''
     }
 })
 // bookSchema.virtual('formatCreateTime').get(function() {
