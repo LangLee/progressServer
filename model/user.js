@@ -22,6 +22,10 @@ var userSchema = Schema({
     administrator: {
         type: Boolean,
         default: false
+    },
+    avatar: {
+        type: String,
+        default: ''
     }
 })
 

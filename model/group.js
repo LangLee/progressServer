@@ -20,7 +20,11 @@ const GroupSchema = new Schema({
     createTime: {
         type: Date,
         default: Date.now
-    }
+    },
+    appId: {
+        type: Schema.Types.ObjectId,
+        ref: 'app'
+    },
 })
 const Group = mongoose.model('group', GroupSchema, 'group')
 export default Group

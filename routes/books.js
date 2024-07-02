@@ -53,7 +53,7 @@ router.get('/getBookById', jwt.verify, (req, res) => {
 });
 // 创建书籍
 router.post('/createBook', jwt.verify, (req, res) => {
-  let { title, content, type, category } = req.body || {};
+  let { title, content, type, category, url } = req.body || {};
   let userId = req._userId;
   let template;
   switch (type) {
@@ -63,12 +63,15 @@ router.post('/createBook', jwt.verify, (req, res) => {
     case 'code':
       template = helloworld;
       break;
+    case 'link':
+      template = '';
+      break;
     default:
       template = story;
       break;
   }
   content = content || template;
-  Book.create({ title, content, author: userId, type, category }).then((data) => {
+  Book.create({ title, content, author: userId, type, category, url }).then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -81,11 +84,11 @@ router.post('/createBook', jwt.verify, (req, res) => {
 });
 // 更新书籍
 router.post('/updateBook', jwt.verify, (req, res) => {
-  let { id, content, anchors } = req.body || {};
+  let { id, content, anchors, url, category } = req.body || {};
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { content, anchors } }).exec().then((data) => {
+  Book.findByIdAndUpdate(id, { $set: { content, anchors, url, category } }).exec().then((data) => {
     if (data) {
       res.json({
         success: true,

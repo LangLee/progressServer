@@ -36,7 +36,11 @@ var bookSchema = Schema({
     url: {
         type: String,
         default: ''
-    }
+    },
+    appId: {
+        type: Schema.Types.ObjectId,
+        ref: 'app'
+    },
 })
 // bookSchema.virtual('formatCreateTime').get(function() {
 //   return this.createTime.toISOString();

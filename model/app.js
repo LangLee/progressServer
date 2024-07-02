@@ -1,8 +1,12 @@
-import { type } from 'express/lib/response';
 import mongoose from 'mongoose';
 var Schema = mongoose.Schema
 // 标签
 var AppSchema = Schema({
+    name: {
+        type: String,
+        required: true,
+        unique: true
+    },
     title: {
         type: String,
         required: true
@@ -27,7 +31,9 @@ var AppSchema = Schema({
         type: Schema.Types.ObjectId,
         ref: 'user'
     },
-    description: String
+    description: {
+        type: String
+    }
 })
 
 const App = mongoose.model('app', AppSchema, "app")

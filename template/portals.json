@@ -37,6 +37,18 @@
             {
                 "title": "通义千问",
                 "url": "https://tongyi.aliyun.com/qianwen"
+            },
+            {
+                "title": "讯飞星火",
+                "url": "https://xinghuo.xfyun.cn/"
+            },
+            {
+                "title": "百度文心",
+                "url": "https://wenxin.baidu.com/product/wenxin"
+            },
+            {
+                "title": "有道智云",
+                "url": "https://ai.youdao.com/"
             }
         ]
     }, {

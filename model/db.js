@@ -52,7 +52,8 @@ const initPortals = async (adminId)=>{
     console.log('Portals already present in the database.');
     return;
   } else {
-    let insertPortals = portals.map(({name})=>({name, author: adminId}))
+    let portalApp = await App.findOne({name: 'portal'}).exec();
+    let insertPortals = portals.map(({name})=>({name, author: adminId, appId: portalApp._id}))
     await Group.insertMany(insertPortals).then((data)=>{
       if(data) {
         console.log('Initial portals created!');
@@ -60,7 +61,7 @@ const initPortals = async (adminId)=>{
           let {name} = portal;
           let group = data.find((item)=>item.name===name);
           portal.books.forEach(({title, url})=>{
-            Book.create({title, url, author: adminId, category: group._id, type: 'link'})
+            Book.create({title, url, author: adminId, category: group._id, type: 'link', appId: portalApp.id})
           })
         })
         console.log('Initial books created!');
