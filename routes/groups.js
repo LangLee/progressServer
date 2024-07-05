@@ -41,10 +41,49 @@ const getAllGroupAndBooks = async (userId, defaultGroup=true) => {
             return { success: false, message: err };
         });
 }
+const getAppAllGroupAndBooks = async (appId, userId, defaultGroup=true) => {
+    let groups = await Group.find({ appId, author: userId }).select('name').sort({ createTime: 'asc' }).exec().then((data)=> {
+        let groups = data && data.map(({_id, name})=>({id:_id, name}));
+        if (defaultGroup) {
+            groups.splice(0, 0, {id: 'default', name: '默认', readonly: true});
+        }
+        return groups;
+    }).catch(err => {
+        return { success: false, message: err };
+    });
+    return Book.find({ appId, author: userId }).select('title createTime category type url appId').sort({ createTime: 'desc' }).exec()
+        .then(data => {
+            let groupBooks={};
+            if (data && data.length) {
+                data.map((book) => {
+                    let { _id, title, createdTime, category='default', type, url } = book || {};
+                    if (!groupBooks || !groupBooks[category]) {
+                        groupBooks[category] = [];
+                    }
+                    groupBooks[category].push({ id: _id, title, createdTime, category, type, url });
+                })
+            }
+            groups.forEach(group => {
+                group.books = groupBooks[group.id];
+            })
+            return {
+                success: true,
+                data: groups
+            };
+        }).catch(err => {
+            return { success: false, message: err };
+        });
+}
 //获取分组和图书
 router.get('/getGroupAndBooks', jwt.verify, async (req, res) => {
     let userId = req._userId;
     let result = await getAllGroupAndBooks(userId);
+    res.json(result);
+})
+router.get('/getAppGroupAndBooks', jwt.verify, async (req, res) => {
+    let userId = req._userId;
+    let appId = req.headers.appid;
+    let result = await getAppAllGroupAndBooks(appId, userId, false);
     res.json(result);
 })
 // 获取门户和图书
@@ -63,7 +102,8 @@ router.get('/getPortalAndBooks', jwt.verify, async (req, res) => {
 router.post('/createGroup', jwt.verify, (req, res) => {
     let { name } = req.body || {};
     let userId = req._userId;
-    Group.create({ name, author: userId }).then((data) => {
+    let appId = req.headers.appid;
+    Group.create({ name, author: userId, appId }).then((data) => {
         if (data) {
             res.json({
                 success: true,

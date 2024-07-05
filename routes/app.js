@@ -10,8 +10,7 @@ router.get('/', function (req, res, next) {
 // 获取应用
 router.get('/getApps', jwt.verify, async (req, res) => {
   let user = await User.findById(req._userId).exec();
-  App.find().exec()
-    .then(data => {
+  App.find({$or: [{author: req._userId}, {system: true}]}).exec().then(data => {
       res.json({
         success: true,
         data: {editable: user.administrator, apps: data}
@@ -22,9 +21,9 @@ router.get('/getApps', jwt.verify, async (req, res) => {
 });
 // 创建应用
 router.post('/createApp', jwt.verify, (req, res) => {
-  let { title, inner, url, icon, description } = req.body || {};
+  let { name, title, inner, url, icon, description } = req.body || {};
   let userId = req._userId;
-  App.create({ title, inner, url, icon, description, author: userId }).then((data) => {
+  App.create({ name, title, inner, url, icon, description, author: userId }).then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -37,14 +36,15 @@ router.post('/createApp', jwt.verify, (req, res) => {
 });
 // 更新应用
 router.post('/updateApp', jwt.verify, (req, res) => {
-  let { id, title, inner, url, icon, description } = req.body || {};
-  if (!id) {
+  let { _id, name, title, inner, url, icon, description } = req.body || {};
+  if (!_id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  App.findByIdAndUpdate(id, { $set: { title, inner, url, icon, description}}).exec().then((data) => {
+  App.findByIdAndUpdate(_id, { $set: { name, title, inner, url, icon, description}}).exec().then((data) => {
     if (data) {
       res.json({
         success: true,
+        message: '更新成功！',
         data: data
       });
     } else {

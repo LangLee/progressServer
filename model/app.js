@@ -33,6 +33,10 @@ var AppSchema = Schema({
     },
     description: {
         type: String
+    },
+    system: {
+        type: Boolean,
+        default: false
     }
 })
 

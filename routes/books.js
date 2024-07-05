@@ -12,16 +12,45 @@ router.get('/', function (req, res, next) {
 router.get('/getBooks', jwt.verify, (req, res) => {
   let { sort = { createTime: 'desc' } } = req.query;
   let userId = req._userId;
-  Book.find({ author: userId }).select('title createTime category type').sort(sort)
+  Book.find({ author: userId }).select('title createTime category type url appId').sort(sort)
     .exec()
     .then(data => {
-      let books = data && data.length && data.map(({ _id, title, createTime, category, type }) => {
+      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId }) => {
         return {
           _id,
           title,
           createTime: dateFormatter.format(new Date(createTime)),
           category,
-          type
+          type,
+          url,
+          appId
+        }
+      })
+      res.json({
+        success: true,
+        data: books
+      });
+    }).catch(err => {
+      res.json({ success: false, message: err });
+    });
+});
+// 获取应用下书籍列表
+router.get('/getAppBooks', jwt.verify, (req, res) => {
+  let { sort = { createTime: 'desc' } } = req.query;
+  let userId = req._userId;
+  let appId = req.headers.appid;
+  Book.find({ author: userId, appId }).select('title createTime category type url appId').sort(sort)
+    .exec()
+    .then(data => {
+      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId }) => {
+        return {
+          _id,
+          title,
+          createTime: dateFormatter.format(new Date(createTime)),
+          category,
+          type,
+          url,
+          appId
         }
       })
       res.json({
@@ -55,6 +84,7 @@ router.get('/getBookById', jwt.verify, (req, res) => {
 router.post('/createBook', jwt.verify, (req, res) => {
   let { title, content, type, category, url } = req.body || {};
   let userId = req._userId;
+  let appId = req.headers.appid;
   let template;
   switch (type) {
     case 'text':
@@ -71,7 +101,7 @@ router.post('/createBook', jwt.verify, (req, res) => {
       break;
   }
   content = content || template;
-  Book.create({ title, content, author: userId, type, category, url }).then((data) => {
+  Book.create({ title, content, author: userId, type, category, url, appId }).then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -80,7 +110,9 @@ router.post('/createBook', jwt.verify, (req, res) => {
     } else {
       res.json({ success: false, message: '创建失败！' });
     }
-  })
+  }).catch((err) => {
+    res.json({ success: false, message: err.message });
+  });
 });
 // 更新书籍
 router.post('/updateBook', jwt.verify, (req, res) => {
@@ -137,9 +169,26 @@ router.get('/searchBook', jwt.verify, (req, res) => {
   Book.find({ '$or': [{ 'title': { $regex: key } }, { 'anchors': { $elemMatch: { 'textContent': { $regex: key } } } }] }).exec().then((data) => {
     let books = [];
     if (data && data.length > 0) {
-      books = data.map(({ id, title, anchors }) => {
+      books = data.map(({ id, title, appId, anchors }) => {
         let filterAnchors = anchors.filter(({ textContent }) => textContent.indexOf(key) !== -1).map(({ id, textContent }) => ({ id, textContent }));
-        return { id, title, anchors: filterAnchors }
+        return { id, title, appId, anchors: filterAnchors }
+      })
+    }
+    res.json({
+      success: true,
+      data: books
+    });
+  });
+});
+router.get('/searchAppBook', jwt.verify, (req, res) => {
+  let { key = "" } = req.query || {};
+  let appId = req.headers.appid;
+  Book.find({'$and': [{'appId': appId}, { '$or': [{ 'title': { $regex: key } }, { 'anchors': { $elemMatch: { 'textContent': { $regex: key } } } }] }]}).exec().then((data) => {
+    let books = [];
+    if (data && data.length > 0) {
+      books = data.map(({ id, title, appId, anchors }) => {
+        let filterAnchors = anchors.filter(({ textContent }) => textContent.indexOf(key) !== -1).map(({ id, textContent }) => ({ id, textContent }));
+        return { id, title, appId, anchors: filterAnchors }
       })
     }
     res.json({

@@ -33,7 +33,7 @@ const initApplications = async (adminId)=>{
     console.log('Applications already present in the database.');
     return;
   } else {
-    let insertApps = apps.map((app)=>({...app, author: adminId}))
+    let insertApps = apps.map((app)=>({...app, author: adminId, system: true}))
     await App.insertMany(insertApps).then((data)=>{
       if(data) {
         console.log('Initial applications created!');
@@ -53,7 +53,7 @@ const initPortals = async (adminId)=>{
     return;
   } else {
     let portalApp = await App.findOne({name: 'portal'}).exec();
-    let insertPortals = portals.map(({name})=>({name, author: adminId, appId: portalApp._id}))
+    let insertPortals = portals.map(({name})=>({name, author: adminId, appId: portalApp.id}))
     await Group.insertMany(insertPortals).then((data)=>{
       if(data) {
         console.log('Initial portals created!');
