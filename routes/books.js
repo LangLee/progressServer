@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import Book from '../model/book'
 import dateFormatter from '../utils/dateFormat';
-import { story, storyWithoutTitle, helloworld } from '../template/book';
+import { story, storyWithoutTitle, helloworld, todoList } from '../template/book';
 const jwt = require('../jwt');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -93,6 +93,9 @@ router.post('/createBook', jwt.verify, (req, res) => {
     case 'code':
       template = helloworld;
       break;
+      case 'task':
+        template = todoList;
+        break;
     case 'link':
       template = '';
       break;
