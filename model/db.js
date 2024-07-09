@@ -17,8 +17,8 @@ const initAdministrator = async () => {
       admin = await User.create({name: 'admin', password: md5('123qwe!@#'), administrator: true})
       console.log('Initial users created!');
     }
-    initApplications(admin.id || admin._id);
-    initPortals(admin.id || admin._id);
+    await initApplications(admin.id || admin._id);
+    await initPortals(admin.id || admin._id);
   } catch (error) {
     console.error('Error creating initial data:', error);
   }
@@ -53,6 +53,7 @@ const initPortals = async (adminId)=>{
     return;
   } else {
     let portalApp = await App.findOne({name: 'portal'}).exec();
+    if (!portalApp || !portalApp.id) return;
     let insertPortals = portals.map(({name})=>({name, author: adminId, appId: portalApp.id}))
     await Group.insertMany(insertPortals).then((data)=>{
       if(data) {

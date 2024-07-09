@@ -15,8 +15,8 @@ router.get('/getApps', jwt.verify, async (req, res) => {
         success: true,
         data: {editable: user.administrator, apps: data}
       });
-    }).catch(err => {
-      res.json({ success: false, message: err });
+    }).catch(e => {
+      res.json({ success: false, message: e.message });
     });
 });
 // 创建应用

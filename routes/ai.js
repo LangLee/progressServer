@@ -2,53 +2,64 @@ import express from 'express';
 const router = express.Router();
 import axios from 'axios';
 import sha256 from '../utils/sha256';
-import {OpenAI} from 'openai';
+import {getMoonshotAiChat, getTongYiAiChat, getQianFanAiChat} from '../utils/api';
+import Book from '../model/book';
 const jwt = require('../jwt');
 router.get('/', function (req, res, next) {
     res.send('respond with a resource');
 });
-
-// 百度千帆大模型
-
-const API_KEY = "MNGeOeRpzX5dvOvHJhrYpDwq";
-const SECRET_KEY = "EsDeAJAVtMYBFwOH4gR9V7UyZXEEEVR7";
-const TOKEN_URL = "https://aip.baidubce.com/oauth/2.0/token";
-const QIANFAN_CHART_AI_URL = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro"
-const getToken = async () => {
-    const url = `${TOKEN_URL}?grant_type=client_credentials&client_id=${API_KEY}&client_secret=${SECRET_KEY}`
-    return axios.post(url).then((res) => {
-        if (res && res.data) {
-            return res.data;
-        }
-    });
-}
-router.post('/getQianFanAiChart', jwt.verify, async (req, res) => {
+router.post('/getAiChat', jwt.verify, async (req, res) => {
     let {
-        messages,
+        id,
+        mode,
         question
     } = req.body;
-    messages = messages || [];
-    messages.push({role: 'user', content: question})
-    let tokenObj = await getToken();
-    if (!tokenObj || !tokenObj.access_token) {
-        return res.json({
+    let appId = req.headers.appid;
+    let func = function (messages, question) {
+        switch (mode) {
+            case 'tongyi':
+                return getTongYiAiChat(messages, question);
+            case 'moonshot':
+                return getMoonshotAiChat(messages, question);
+            case 'qianfan':
+                return getQianFanAiChat(messages, question);
+            default:
+                return getTongYiAiChat(messages, question);
+        }
+    }
+    let messages = [], book;
+    if (id) {
+        book = await Book.findById(id);
+        if (book) {
+            messages = book.content?JSON.parse(book.content):[]
+        }
+    }
+    let result = await func(messages, question);
+    if (result && result.success) {
+        messages = messages.concat([{ role: "user", content: question }, { role: "assistant", content: result.data }])
+        if (book) {
+            book.content = JSON.stringify(messages);
+            book.save();
+        } else {
+            book = await Book.create({
+                title: question.slice(0, 8),
+                content: JSON.stringify(messages),
+                author: req._userId,
+                appId,
+                type: "chat"
+            })
+        }
+        res.json({
+            success: true,
+            data: {id: book._id, response: result.data}
+        });
+    } else {
+        res.json({
             success: false,
-            message: "获取token失败"
+            message: result.message
         });
     }
-    let token = tokenObj.access_token;
-    const url = `${QIANFAN_CHART_AI_URL}?access_token=${token}`;
-    const params = { messages }
-    axios.post(url, params).then((data) => {
-        if (data.data) {
-            res.json({
-                success: true,
-                data: data.data
-            });
-        }
-    })
 })
-
 // 有道智云
 const truncate = (q) => {
     var len = q.length;
@@ -139,65 +150,4 @@ router.post('/getYouDaoAiTranslate', jwt.verify, async (req, res) => {
     })
 })
 
-// 阿里通义
-const TONGYI_AI_URL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
-const TONGYI_API_KEY = 'sk-5ff136a985654f72a5fb61e3218aa000';
-router.post('/getTongYiAiChart', jwt.verify, async (req, res) => {
-    let {
-        messages,
-        question
-    } = req.body;
-    const params = {
-        model: 'qwen-turbo',
-        input: {
-            prompt: question
-        },
-        messages
-    }
-    const headers = { Authorization: TONGYI_API_KEY };
-    axios.post(TONGYI_AI_URL, params, { headers }).then(data => {
-        if (data.data) {
-            res.json({
-                success: true,
-                data: data.data
-            });
-        }
-    }).catch()
-})
-// 月之暗面 Moonshot
-const MOONSHOT_AI_URL = 'https://api.moonshot.cn/v1';
-const MOONSHOT_API_KEY = 'sk-D0iEXHeRJAmEIz7DXTExkQwK51lWknK8xjK9VomjPT7WqR5u';
-const moonshotClient = new OpenAI({
-    apiKey: MOONSHOT_API_KEY,    
-    baseURL: MOONSHOT_AI_URL,
-});
-router.post('/getMoonshotAiChart', jwt.verify, async (req, res) => {
-    let {
-        messages,
-        question
-    } = req.body;
-    messages = messages || [];
-    messages.push({ role: "user", content: question });
-    const completion = await moonshotClient.chat.completions.create({
-        model: "moonshot-v1-8k",         
-        messages: messages,
-        temperature: 0.3
-    }).catch(() => {
-        res.json({
-            success: false,
-            message: '对话失败'
-        })
-    });
-    if (completion && completion.choices && completion.choices.length > 0) {
-        res.json({
-            success: true,
-            data: completion.choices[0].message.content
-        });
-    } else {
-        res.json({
-            success: false,
-            message: '对话失败'
-        });
-    }
-})
 export default router;

@@ -93,10 +93,11 @@ router.post('/createBook', jwt.verify, (req, res) => {
     case 'code':
       template = helloworld;
       break;
-      case 'task':
-        template = todoList;
-        break;
+    case 'task':
+      template = todoList;
+      break;
     case 'link':
+    case 'chat':
       template = '';
       break;
     default:
@@ -186,7 +187,7 @@ router.get('/searchBook', jwt.verify, (req, res) => {
 router.get('/searchAppBook', jwt.verify, (req, res) => {
   let { key = "" } = req.query || {};
   let appId = req.headers.appid;
-  Book.find({'$and': [{'appId': appId}, { '$or': [{ 'title': { $regex: key } }, { 'anchors': { $elemMatch: { 'textContent': { $regex: key } } } }] }]}).exec().then((data) => {
+  Book.find({ '$and': [{ 'appId': appId }, { '$or': [{ 'title': { $regex: key } }, { 'anchors': { $elemMatch: { 'textContent': { $regex: key } } } }] }] }).exec().then((data) => {
     let books = [];
     if (data && data.length > 0) {
       books = data.map(({ id, title, appId, anchors }) => {

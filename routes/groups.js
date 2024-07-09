@@ -8,11 +8,11 @@ const jwt = require('../jwt');
 router.get('/', function (req, res, next) {
     res.send('respond with a resource');
 });
-const getAllGroupAndBooks = async (userId, defaultGroup=true) => {
-    let groups = await Group.find({ author: userId }).select('name').sort({ createTime: 'asc' }).exec().then((data)=> {
-        let groups = data && data.map(({_id, name})=>({id:_id, name}));
+const getAllGroupAndBooks = async (userId, defaultGroup = true) => {
+    let groups = await Group.find({ author: userId }).select('name').sort({ createTime: 'asc' }).exec().then((data) => {
+        let groups = data && data.map(({ _id, name }) => ({ id: _id, name }));
         if (defaultGroup) {
-            groups.splice(0, 0, {id: 'default', name: '默认', readonly: true});
+            groups.splice(0, 0, { id: 'default', name: '默认', readonly: true });
         }
         return groups;
     }).catch(err => {
@@ -20,10 +20,10 @@ const getAllGroupAndBooks = async (userId, defaultGroup=true) => {
     });
     return Book.find({ author: userId }).select('title createTime category type url').sort({ createTime: 'desc' }).exec()
         .then(data => {
-            let groupBooks={};
+            let groupBooks = {};
             if (data && data.length) {
                 data.map((book) => {
-                    let { _id, title, createdTime, category='default', type, url } = book || {};
+                    let { _id, title, createdTime, category = 'default', type, url } = book || {};
                     if (!groupBooks || !groupBooks[category]) {
                         groupBooks[category] = [];
                     }
@@ -41,11 +41,11 @@ const getAllGroupAndBooks = async (userId, defaultGroup=true) => {
             return { success: false, message: err };
         });
 }
-const getAppAllGroupAndBooks = async (appId, userId, defaultGroup=true) => {
-    let groups = await Group.find({ appId, author: userId }).select('name').sort({ createTime: 'asc' }).exec().then((data)=> {
-        let groups = data && data.map(({_id, name})=>({id:_id, name}));
+const getAppAllGroupAndBooks = async (appId, userId, defaultGroup = true) => {
+    let groups = await Group.find({ appId, author: userId }).select('name').sort({ createTime: 'asc' }).exec().then((data) => {
+        let groups = data && data.map(({ _id, name }) => ({ id: _id, name }));
         if (defaultGroup) {
-            groups.splice(0, 0, {id: 'default', name: '默认', readonly: true});
+            groups.splice(0, 0, { id: 'default', name: '默认', readonly: true });
         }
         return groups;
     }).catch(err => {
@@ -53,10 +53,10 @@ const getAppAllGroupAndBooks = async (appId, userId, defaultGroup=true) => {
     });
     return Book.find({ appId, author: userId }).select('title createTime category type url appId').sort({ createTime: 'desc' }).exec()
         .then(data => {
-            let groupBooks={};
+            let groupBooks = {};
             if (data && data.length) {
                 data.map((book) => {
-                    let { _id, title, createdTime, category='default', type, url } = book || {};
+                    let { _id, title, createdTime, category = 'default', type, url } = book || {};
                     if (!groupBooks || !groupBooks[category]) {
                         groupBooks[category] = [];
                     }
@@ -83,17 +83,19 @@ router.get('/getGroupAndBooks', jwt.verify, async (req, res) => {
 router.get('/getAppGroupAndBooks', jwt.verify, async (req, res) => {
     let userId = req._userId;
     let appId = req.headers.appid;
-    let result = await getAppAllGroupAndBooks(appId, userId, false);
+    let { defaultGroup } = req.query;
+    defaultGroup = (defaultGroup === true || defaultGroup === 'true') ? true : false;
+    let result = await getAppAllGroupAndBooks(appId, userId, defaultGroup);
     res.json(result);
 })
 // 获取门户和图书
 router.get('/getPortalAndBooks', jwt.verify, async (req, res) => {
-    let userId = await User.findOne({name: 'admin'}).exec().then((data)=>data.id);
+    let userId = await User.findOne({ name: 'admin' }).exec().then((data) => data.id);
     let result = await getAllGroupAndBooks(userId, false);
     let editable = userId === req._userId;
-    let {success, data} = result;
+    let { success, data } = result;
     if (success) {
-        res.json({success: true, data: { editable, portals: data }});
+        res.json({ success: true, data: { editable, portals: data } });
     } else {
         res.json(result);
     }
