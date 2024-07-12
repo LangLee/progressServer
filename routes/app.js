@@ -23,6 +23,7 @@ router.get('/getApps', jwt.verify, async (req, res) => {
 router.post('/createApp', jwt.verify, (req, res) => {
   let { name, title, inner, url, icon, description } = req.body || {};
   let userId = req._userId;
+  name = name || new Date().getTime();
   App.create({ name, title, inner, url, icon, description, author: userId }).then((data) => {
     if (data) {
       res.json({
@@ -32,7 +33,9 @@ router.post('/createApp', jwt.verify, (req, res) => {
     } else {
       res.json({ success: false, message: '创建失败！' });
     }
-  })
+  }).catch(e => {
+    res.json({ success: false, message: e.message });
+  });
 });
 // 更新应用
 router.post('/updateApp', jwt.verify, (req, res) => {

@@ -35,5 +35,23 @@
         "icon": "code-box-fill",
         "url": "/coding",
         "inner": true
+    }, {
+        "name": "chat",
+        "title": "聊天",
+        "icon": "message-3-fill",
+        "url": "/chat",
+        "inner": true
+    }, {
+        "name": "words",
+        "title": "单词本",
+        "icon": "book-read-fill",
+        "url": "/words",
+        "inner": true
+    }, {
+        "name": "setting",
+        "title": "设置",
+        "icon": "settings-5-fill",
+        "url": "/setting",
+        "inner": true
     }
 ]

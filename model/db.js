@@ -7,6 +7,7 @@ import Group from './group.js';
 import apps from '../template/apps.json'
 import portals from '../template/portals.json'
 import Book from './book.js';
+import config from '../mongo.config.json'
 // 创建系统用户
 const initAdministrator = async () => {
   try {
@@ -72,7 +73,7 @@ const initPortals = async (adminId)=>{
 }
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/progress');
+    await mongoose.connect(`mongodb://${config.ip}:${config.port}/${config.dbName}`);
     console.log('MongoDB Connected');
     await initAdministrator();
   } catch (error) {

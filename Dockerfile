@@ -8,8 +8,8 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # 安装项目依赖  
-RUN npm install --registry https://registry.npm.taobao.org
-
+# RUN npm install --registry https://registry.npm.taobao.org
+RUN npm install --registry https://mirrors.cloud.tencent.com/npm/
 # 将当前目录下的文件复制到容器中的工作目录  
 COPY . .  
 

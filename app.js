@@ -11,8 +11,10 @@ import appRouter from "./routes/app";
 import aiRouter from "./routes/ai";
 import wordRouter from "./routes/word";
 import noteRouter from "./routes/note";
+import messageRouter from "./routes/message";
 import connectDB from "./model/db";
 import cors from "cors";
+import "./websocket";
 const app = express();
 
 // view engine setup
@@ -34,6 +36,7 @@ app.use('/ai', aiRouter);
 app.use('/app', appRouter);
 app.use('/word', wordRouter);
 app.use('/note', noteRouter);
+app.use('/message', messageRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
