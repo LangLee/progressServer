@@ -25,5 +25,20 @@ router.get('/getContactMessages', jwt.verify, async (req, res) => {
         })
     });
 })
-
+router.post('/updateContactMessageStatus', jwt.verify, async (req, res) => {
+    let {from ,to ,status} = req.body || {};
+    Message.updateMany({from, to}, {$set: {status: status}}).then((data) => {
+        if (data) {
+            res.json({
+                success: true,
+                data: data
+            })
+        } else {
+            res.json({
+                success: false,
+                message: '更新聊天信息状态失败！'
+            })
+        }
+    })
+})
 export default router;

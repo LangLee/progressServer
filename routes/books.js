@@ -124,7 +124,7 @@ router.post('/updateBook', jwt.verify, (req, res) => {
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { content, anchors, url, category } }).exec().then((data) => {
+  Book.findByIdAndUpdate(id, { $set: { content, anchors, url, category, updateTime: Date.now } }).exec().then((data) => {
     if (data) {
       res.json({
         success: true,

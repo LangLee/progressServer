@@ -28,6 +28,10 @@ var bookSchema = Schema({
         type: Date,
         default: Date.now
     },
+    updateTime: {
+        type: Date,
+        default: Date.now
+    },
     anchors: Anchors,
     category: {
         type: Schema.Types.ObjectId,

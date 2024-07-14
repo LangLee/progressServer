@@ -12,6 +12,7 @@ import aiRouter from "./routes/ai";
 import wordRouter from "./routes/word";
 import noteRouter from "./routes/note";
 import messageRouter from "./routes/message";
+import fileRouter from "./routes/file";
 import connectDB from "./model/db";
 import cors from "cors";
 import "./websocket";
@@ -37,6 +38,7 @@ app.use('/app', appRouter);
 app.use('/word', wordRouter);
 app.use('/note', noteRouter);
 app.use('/message', messageRouter);
+app.use('/file', fileRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
