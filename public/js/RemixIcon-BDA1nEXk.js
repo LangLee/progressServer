@@ -1,0 +1,1 @@
+import{ay as a,az as n,aT as r}from"./vendor-BLq22pPX.js";const s={__name:"RemixIcon",props:{name:{type:String,required:!0}},setup(e){return(t,c)=>(a(),n("i",{class:r(`ri-${e.name}`)},null,2))}},m=s;export{m as R};

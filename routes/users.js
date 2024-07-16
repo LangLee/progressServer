@@ -90,14 +90,16 @@ router.post('/uploadAvatar', jwt.verify, upload.single('file'), async (req, res)
   if (user.avatar) {
     // 删除历史头像
     const filePath = `uploads/${user.avatar}`;
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        res.json({
-          success: false,
-          message: err.message
-        });
-      }
-    });
+    if (fs.existsSync(filePath)) {
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          res.json({
+            success: false,
+            message: err.message
+          });
+        }
+      });
+    }
   }
 
   user.$set({ avatar: req.file.filename });
@@ -118,30 +120,54 @@ router.post('/uploadAvatar', jwt.verify, upload.single('file'), async (req, res)
 });
 router.post('/removeAvatar', jwt.verify, async (req, res) => {
   let { _id, avatar } = req.body || {};
+  if (!avatar) {
+    return res.json({
+      success: false,
+      message: '删除失败！'
+    });
+  }
   const filePath = `uploads/${avatar}`;
-  fs.unlink(filePath, (err) => {
-    if (err) {
-      res.json({
-        success: false,
-        message: '删除失败！'
-      });
-    } else {
-      User.findByIdAndUpdate(_id, { $set: { avatar: '' } }).then((data) => {
-        if (data) {
-          let { _id, name } = data;
-          res.json({
-            success: true,
-            data: { _id, name, avatar: '' }
-          });
-        } else {
-          res.json({
-            success: false,
-            message: '更新失败！'
-          });
-        }
-      });
-    }
-  });
+  if (fs.existsSync(filePath)) {
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        res.json({
+          success: false,
+          message: '删除失败！'
+        });
+      } else {
+        User.findByIdAndUpdate(_id, { $set: { avatar: '' } }).then((data) => {
+          if (data) {
+            let { _id, name } = data;
+            res.json({
+              success: true,
+              data: { _id, name, avatar: '' }
+            });
+          } else {
+            res.json({
+              success: false,
+              message: '更新失败！'
+            });
+          }
+        });
+      }
+    });
+  } else {
+    User.findByIdAndUpdate(_id, { $set: { avatar: '' } }).then((data) => {
+      if (data) {
+        let { _id, name } = data;
+        res.json({
+          success: true,
+          data: { _id, name, avatar: '' }
+        });
+      } else {
+        res.json({
+          success: false,
+          message: '更新失败！'
+        });
+      }
+    });
+  }
+  
 });
 
 // 获取用户列表

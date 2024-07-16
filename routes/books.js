@@ -8,6 +8,32 @@ const jwt = require('../jwt');
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
 });
+router.get('/getAllBooks', jwt.verify, (req, res) => {
+  let { sort = { updateTime: 'desc' } } = req.query;
+  Book.find().select('title updateTime category type url appId description author').sort(sort)
+    .exec()
+    .then(data => {
+      let books = data && data.length && data.map(({ _id, title, updateTime, category, type, url, appId, description, author }) => {
+        return {
+          _id,
+          title,
+          category,
+          type,
+          url,
+          appId,
+          description,
+          author,
+          updateTime: dateFormatter.format(new Date(updateTime))
+        }
+      })
+      res.json({
+        success: true,
+        data: books
+      });
+    }).catch(err => {
+      res.json({ success: false, message: err });
+    });
+});
 // 获取书籍列表
 router.get('/getBooks', jwt.verify, (req, res) => {
   let { sort = { createTime: 'desc' } } = req.query;
@@ -63,7 +89,7 @@ router.get('/getAppBooks', jwt.verify, (req, res) => {
 });
 // 获取书籍
 router.get('/getBookById', jwt.verify, (req, res) => {
-  console.log(req.query.id);
+  let userId = req._userId;
   if (!req.query || !req.query.id) {
     res.json({ success: false, message: '参数错误！' });
     return;
@@ -71,9 +97,10 @@ router.get('/getBookById', jwt.verify, (req, res) => {
   Book.findById(req.query.id)
     .exec().then((data) => {
       if (data) {
+        let {_id, title, content, url, type, author, anchors } = data;
         res.json({
           success: true,
-          data: data
+          data: {_id, title, content, anchors, url, type, editable: author.equals(userId) }
         });
       } else {
         res.json({ success: false, message: '没有找到书籍！' });
@@ -119,21 +146,33 @@ router.post('/createBook', jwt.verify, (req, res) => {
   });
 });
 // 更新书籍
-router.post('/updateBook', jwt.verify, (req, res) => {
-  let { id, content, anchors, url, category } = req.body || {};
+router.post('/updateBook', jwt.verify, async (req, res) => {
+  let userId = req._userId;
+  let { id, title, content, anchors, url, category, description, image } = req.body || {};
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { content, anchors, url, category, updateTime: Date.now } }).exec().then((data) => {
-    if (data) {
-      res.json({
-        success: true,
-        data: data
-      });
-    } else {
-      res.json({ success: false, message: '更新失败！' });
-    }
-  });
+  let book = await Book.findById(id);
+  if(!book) {
+    return res.json({ success: false, message: '未找到书目！' })
+  } else if (!book.author.equals(userId)) {
+    return res.json({ success: false, message: '没有权限更改！' })
+  } else if (book.type === 'link' && !url) {
+    return res.json({ success: false, message: '请填写链接地址！' })
+  } else {
+    Book.findByIdAndUpdate(id, { $set: { title, category, url, content, anchors, updateTime: new Date(), description, image} }).exec().then((data) => {
+      if (data) {
+        res.json({
+          success: true,
+          data: data
+        });
+      } else {
+        res.json({ success: false, message: '更新失败！' });
+      }
+    }).catch((err) => {
+      res.json({ success: false, message: err.message });
+    });
+  }
 });
 // 更新书籍
 router.post('/updateBookTitle', jwt.verify, (req, res) => {

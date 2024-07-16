@@ -45,6 +45,10 @@ var bookSchema = Schema({
         type: Schema.Types.ObjectId,
         ref: 'app'
     },
+    share: {
+        type: Boolean,
+        default: false
+    }
 })
 // bookSchema.virtual('formatCreateTime').get(function() {
 //   return this.createTime.toISOString();
