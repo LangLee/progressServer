@@ -1,11 +1,10 @@
 import express from 'express';
 const router = express.Router();
-const fs = require('fs');
 import User from '../model/user'
 const jwt = require('../jwt');
 import mongoose from 'mongoose';
-import upload from '../utils/upload'
-// import md5 from 'md5';
+import Attachment from '../model/attachment';
+import upload from '../utils/upload';
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
@@ -78,7 +77,7 @@ router.post('/update', (req, res) => {
     });
 });
 // 更新用户
-router.post('/uploadAvatar', jwt.verify, upload.single('file'), async (req, res) => {
+router.post('/uploadAvatar', jwt.verify, upload.single('avatar'), async (req, res) => {
   if (!req.file) {
     return res.json({
       success: false,
@@ -89,33 +88,55 @@ router.post('/uploadAvatar', jwt.verify, upload.single('file'), async (req, res)
   let user = await User.findById(userId);
   if (user.avatar) {
     // 删除历史头像
-    const filePath = `uploads/${user.avatar}`;
-    if (fs.existsSync(filePath)) {
-      fs.unlink(filePath, (err) => {
-        if (err) {
+    // 本地硬盘存储
+    // const filePath = `uploads/${user.avatar}`;
+    // if (fs.existsSync(filePath)) {
+    //   fs.unlink(filePath, (err) => {
+    //     if (err) {
+    //       res.json({
+    //         success: false,
+    //         message: err.message
+    //       });
+    //     }
+    //   });
+    // }
+    // mongodb存储
+    await Attachment.findOneAndDelete({ name: user.avatar }).catch(() => {
+      res.json({
+        success: false,
+        message: '删除旧的头像失败！'
+      });
+    });
+  }
+  let { filename, mimetype, buffer } = req.file || {};
+  Attachment.create({ name: filename, type: mimetype, content: buffer }).then((data) => {
+    if (data) {
+      user.$set({ avatar: name });
+      user.save().then((data) => {
+        if (data) {
+          let { _id, name, avatar } = data;
+          res.json({
+            success: true,
+            data: { _id, name, avatar }
+          });
+        } else {
           res.json({
             success: false,
-            message: err.message
+            message: '更新头像失败！'
           });
         }
-      });
-    }
-  }
-
-  user.$set({ avatar: req.file.filename });
-  user.save().then((data) => {
-    if (data) {
-      let { _id, name, avatar } = data;
-      res.json({
-        success: true,
-        data: { _id, name, avatar }
       });
     } else {
       res.json({
         success: false,
-        message: '更新失败！'
+        message: '上传失败！'
       });
     }
+  }).catch(() => {
+    res.json({
+      success: false,
+      message: '上传失败！'
+    });
   });
 });
 router.post('/removeAvatar', jwt.verify, async (req, res) => {
@@ -126,32 +147,7 @@ router.post('/removeAvatar', jwt.verify, async (req, res) => {
       message: '删除失败！'
     });
   }
-  const filePath = `uploads/${avatar}`;
-  if (fs.existsSync(filePath)) {
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        res.json({
-          success: false,
-          message: '删除失败！'
-        });
-      } else {
-        User.findByIdAndUpdate(_id, { $set: { avatar: '' } }).then((data) => {
-          if (data) {
-            let { _id, name } = data;
-            res.json({
-              success: true,
-              data: { _id, name, avatar: '' }
-            });
-          } else {
-            res.json({
-              success: false,
-              message: '更新失败！'
-            });
-          }
-        });
-      }
-    });
-  } else {
+  Attachment.findOneAndDelete({ name: avatar }).then(() => {
     User.findByIdAndUpdate(_id, { $set: { avatar: '' } }).then((data) => {
       if (data) {
         let { _id, name } = data;
@@ -162,12 +158,58 @@ router.post('/removeAvatar', jwt.verify, async (req, res) => {
       } else {
         res.json({
           success: false,
-          message: '更新失败！'
+          message: '更新头像失败！'
         });
       }
     });
-  }
-  
+  }).catch(() => {
+    res.json({
+      success: false,
+      message: '删除失败！'
+    });
+  });
+  // 本地硬盘存储 删除头像
+  // const filePath = `uploads/${avatar}`;
+  // if (fs.existsSync(filePath)) {
+  //   fs.unlink(filePath, (err) => {
+  //     if (err) {
+  //       res.json({
+  //         success: false,
+  //         message: '删除失败！'
+  //       });
+  //     } else {
+  //       User.findByIdAndUpdate(_id, { $set: { avatar: '' } }).then((data) => {
+  //         if (data) {
+  //           let { _id, name } = data;
+  //           res.json({
+  //             success: true,
+  //             data: { _id, name, avatar: '' }
+  //           });
+  //         } else {
+  //           res.json({
+  //             success: false,
+  //             message: '更新失败！'
+  //           });
+  //         }
+  //       });
+  //     }
+  //   });
+  // } else {
+  //   User.findByIdAndUpdate(_id, { $set: { avatar: '' } }).then((data) => {
+  //     if (data) {
+  //       let { _id, name } = data;
+  //       res.json({
+  //         success: true,
+  //         data: { _id, name, avatar: '' }
+  //       });
+  //     } else {
+  //       res.json({
+  //         success: false,
+  //         message: '更新失败！'
+  //       });
+  //     }
+  //   });
+  // }
 });
 
 // 获取用户列表
