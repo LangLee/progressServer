@@ -15,14 +15,7 @@ const multer = require('multer');
 //   }  
 // });
 
-const storage = multer.memoryStorage({ 
-  filename: function (req, file, cb) {  
-    // let originalNameBuffer = Buffer.from(file.originalname);
-    // let decodedFilename = iconv.decode(originalNameBuffer, 'gbk');
-    file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
-    cb(null, file.fieldname + '_' + Date.now() + '_' + file.originalname);  
-  }  
-});
+const storage = multer.memoryStorage();
   
 const upload = multer({ storage: storage})
 

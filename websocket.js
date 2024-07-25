@@ -9,16 +9,16 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {  
         // 假设第一个消息是用户名，之后的消息是聊天内容  
         if (!ws.userId) {  
-            const userId = message; // 假设用户名是第一个消息  
+            const userId = message.toString(); // 假设用户名是第一个消息  
             ws.userId = userId;  
             clients[userId] = ws; // 将用户ID映射到WebSocket连接  
             // 可以发送确认消息给客户端，表明用户名已注册
-            Message.find({status: "send"}).then(data=>{
-                ws.send(JSON.stringify(data));
-                Message.updateMany({status: "send"}, {status: "receive"}).then(data=>{
-                    console.log(data);
-                })
-            })
+            // Message.find({status: "send"}).then(data=>{
+            //     ws.send(JSON.stringify(data));
+            //     Message.updateMany({status: "send"}, {status: "receive"}).then(data=>{
+            //         console.log(data);
+            //     })
+            // })
         } else {  
             // 转发消息给另一个用户（这里需要知道另一个用户的ID）  
             // 假设我们以某种方式知道了另一个用户的ID，存储在toUserId中  
@@ -28,7 +28,7 @@ wss.on('connection', function connection(ws) {
             const toWs = clients[to];  
             let status = "send";
             if (toWs) {  
-                toWs.send(message); 
+                toWs.send(message.toString()); 
                 status = "receive";
             }
             // 存储聊天记录
