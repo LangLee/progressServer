@@ -1,1 +1,1 @@
-mongorestore --archive=/path/to/your/archive.gz --gizp
+mongorestore --archive=/path/to/your/archive.gz --gzip
