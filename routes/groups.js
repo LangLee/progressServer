@@ -51,16 +51,16 @@ const getAppAllGroupAndBooks = async (appId, userId, defaultGroup = true) => {
     }).catch(err => {
         return { success: false, message: err };
     });
-    return Book.find({ appId, author: userId }).select('title createTime category type url appId').sort({ createTime: 'desc' }).exec()
+    return Book.find({ appId, author: userId }).select('title createTime category type url appId share').sort({ createTime: 'desc' }).exec()
         .then(data => {
             let groupBooks = {};
             if (data && data.length) {
                 data.map((book) => {
-                    let { _id, title, createdTime, category = 'default', type, url } = book || {};
+                    let { _id, title, createdTime, category = 'default', type, url, share } = book || {};
                     if (!groupBooks || !groupBooks[category]) {
                         groupBooks[category] = [];
                     }
-                    groupBooks[category].push({ id: _id, title, createdTime, category, type, url });
+                    groupBooks[category].push({ id: _id, title, createdTime, category, type, url, share });
                 })
             }
             groups.forEach(group => {

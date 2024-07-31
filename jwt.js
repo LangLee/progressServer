@@ -27,3 +27,13 @@ export const verify = (req, res, next) => {
 		}
 	});
 };
+export const execVerify = (req, callback) => {
+	let authorization = req.headers.authorization || req.body.token || req.query.token || '';
+	let token = '';
+	if (authorization.includes('Bearer')) {
+		token = authorization.replace('Bearer ', '');
+	} else {
+		token = authorization;
+	}
+	return jwt.verify(token, secretKey, callback);
+}

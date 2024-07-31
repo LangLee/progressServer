@@ -8,12 +8,12 @@ const jwt = require('../jwt');
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
 });
-router.get('/getAllBooks', jwt.verify, (req, res) => {
+router.get('/getAllBooks', (req, res) => {
   let { sort = { updateTime: 'desc' } } = req.query;
-  Book.find().select('title updateTime category type url appId description author').sort(sort)
+  Book.find({share: true}).select('title updateTime category type url appId description author share').sort(sort)
     .exec()
     .then(data => {
-      let books = data && data.length && data.map(({ _id, title, updateTime, category, type, url, appId, description, author }) => {
+      let books = data && data.length && data.map(({ _id, title, updateTime, category, type, url, appId, description, author, share }) => {
         return {
           _id,
           title,
@@ -23,6 +23,7 @@ router.get('/getAllBooks', jwt.verify, (req, res) => {
           appId,
           description,
           author,
+          share,
           updateTime: dateFormatter.format(new Date(updateTime))
         }
       })
@@ -38,10 +39,10 @@ router.get('/getAllBooks', jwt.verify, (req, res) => {
 router.get('/getBooks', jwt.verify, (req, res) => {
   let { sort = { createTime: 'desc' } } = req.query;
   let userId = req._userId;
-  Book.find({ author: userId }).select('title createTime category type url appId').sort(sort)
+  Book.find({ author: userId }).select('title createTime category type url appId share').sort(sort)
     .exec()
     .then(data => {
-      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId }) => {
+      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId, share }) => {
         return {
           _id,
           title,
@@ -49,7 +50,8 @@ router.get('/getBooks', jwt.verify, (req, res) => {
           category,
           type,
           url,
-          appId
+          appId,
+          share
         }
       })
       res.json({
@@ -65,10 +67,10 @@ router.get('/getAppBooks', jwt.verify, (req, res) => {
   let { sort = { createTime: 'desc' } } = req.query;
   let userId = req._userId;
   let appId = req.headers.appid;
-  Book.find({ author: userId, appId }).select('title createTime category type url appId').sort(sort)
+  Book.find({ author: userId, appId }).select('title createTime category type url appId share').sort(sort)
     .exec()
     .then(data => {
-      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId }) => {
+      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId, share }) => {
         return {
           _id,
           title,
@@ -76,7 +78,8 @@ router.get('/getAppBooks', jwt.verify, (req, res) => {
           category,
           type,
           url,
-          appId
+          appId,
+          share
         }
       })
       res.json({
@@ -88,8 +91,7 @@ router.get('/getAppBooks', jwt.verify, (req, res) => {
     });
 });
 // 获取书籍
-router.get('/getBookById', jwt.verify, (req, res) => {
-  let userId = req._userId;
+router.get('/getBookById', (req, res) => {
   if (!req.query || !req.query.id) {
     res.json({ success: false, message: '参数错误！' });
     return;
@@ -97,14 +99,30 @@ router.get('/getBookById', jwt.verify, (req, res) => {
   Book.findById(req.query.id)
     .exec().then((data) => {
       if (data) {
-        let {_id, title, content, url, type, author, anchors } = data;
-        res.json({
-          success: true,
-          data: {_id, title, content, anchors, url, type, editable: author.equals(userId) }
-        });
+        let {_id, title, content, url, type, author, anchors, share } = data;
+        jwt.execVerify(req, (error, data) => {
+          if (error) {
+            if (share) {
+              res.json({
+                success: true,
+                data: {_id, title, content, anchors, url, type, editable: false }
+              });
+            } else {
+              res.json({ success: false, message: '没有权限查看！' });
+            }
+          } else {
+            let userId = data._id;
+            res.json({
+              success: true,
+              data: {_id, title, content, anchors, url, type, editable: author.equals(userId) }
+            });
+          }
+        })
       } else {
         res.json({ success: false, message: '没有找到书籍！' });
       }
+    }).catch((err)=>{
+      res.json({ success: false, message: err.message });
     })
 });
 // 创建书籍
@@ -148,7 +166,7 @@ router.post('/createBook', jwt.verify, (req, res) => {
 // 更新书籍
 router.post('/updateBook', jwt.verify, async (req, res) => {
   let userId = req._userId;
-  let { id, title, content, anchors, url, category, description, image } = req.body || {};
+  let { id, title, content, anchors, url, category, description, image, share } = req.body || {};
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
@@ -160,7 +178,7 @@ router.post('/updateBook', jwt.verify, async (req, res) => {
   } else if (book.type === 'link' && !url) {
     return res.json({ success: false, message: '请填写链接地址！' })
   } else {
-    Book.findByIdAndUpdate(id, { $set: { title, category, url, content, anchors, updateTime: new Date(), description, image} }).exec().then((data) => {
+    Book.findByIdAndUpdate(id, { $set: { title, category, url, content, anchors, updateTime: new Date(), description, image, share} }).exec().then((data) => {
       if (data) {
         res.json({
           success: true,
