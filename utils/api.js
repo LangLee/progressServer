@@ -64,14 +64,24 @@ const moonshotClient = new OpenAI({
     apiKey: MOONSHOT_API_KEY,    
     baseURL: MOONSHOT_AI_URL,
 });
-const getMoonshotAiChat = async (messages, question)=>{
+
+const getMoonshotAiChat = async (messages, question, stream = false) => {
     messages = messages || [];
     messages.push({ role: "user", content: question });
     const completion = await moonshotClient.chat.completions.create({
         model: "moonshot-v1-8k",         
         messages: messages,
-        temperature: 0.3
+        temperature: 0.3,
+        stream
+    }).catch(err => {
+        return {
+            success: false,
+            message: err.message
+        }
     });
+    if (stream) {
+        return completion;
+    }
     if (completion && completion.choices && completion.choices.length > 0) {
         return {
             success: true,

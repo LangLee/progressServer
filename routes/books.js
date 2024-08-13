@@ -10,7 +10,7 @@ router.get('/', function (req, res, next) {
 });
 router.get('/getAllBooks', (req, res) => {
   let { sort = { updateTime: 'desc' } } = req.query;
-  Book.find({share: true}).select('title updateTime category type url appId description author share').sort(sort)
+  Book.find({ share: true }).select('title updateTime category type url appId description author share').sort(sort)
     .exec()
     .then(data => {
       let books = data && data.length && data.map(({ _id, title, updateTime, category, type, url, appId, description, author, share }) => {
@@ -99,13 +99,13 @@ router.get('/getBookById', (req, res) => {
   Book.findById(req.query.id)
     .exec().then((data) => {
       if (data) {
-        let {_id, title, content, url, type, author, anchors, share } = data;
+        let { _id, title, content, url, type, author, anchors, share } = data;
         jwt.execVerify(req, (error, data) => {
           if (error) {
             if (share) {
               res.json({
                 success: true,
-                data: {_id, title, content, anchors, url, type, editable: false }
+                data: { _id, title, content, anchors, url, type, editable: false }
               });
             } else {
               res.json({ success: false, message: '没有权限查看！' });
@@ -114,14 +114,14 @@ router.get('/getBookById', (req, res) => {
             let userId = data._id;
             res.json({
               success: true,
-              data: {_id, title, content, anchors, url, type, editable: author.equals(userId) }
+              data: { _id, title, content, anchors, url, type, editable: author.equals(userId) }
             });
           }
         })
       } else {
         res.json({ success: false, message: '没有找到书籍！' });
       }
-    }).catch((err)=>{
+    }).catch((err) => {
       res.json({ success: false, message: err.message });
     })
 });
@@ -132,21 +132,19 @@ router.post('/createBook', jwt.verify, (req, res) => {
   let appId = req.headers.appid;
   let template;
   switch (type) {
-    case 'text':
-      template = storyWithoutTitle
-      break;
     case 'code':
       template = helloworld;
       break;
     case 'task':
       template = todoList;
       break;
+    case 'text':
     case 'link':
     case 'chat':
       template = '';
       break;
     default:
-      template = story;
+      template = '';
       break;
   }
   content = content || template;
@@ -171,14 +169,14 @@ router.post('/updateBook', jwt.verify, async (req, res) => {
     res.json({ success: false, message: '更新失败！' });
   };
   let book = await Book.findById(id);
-  if(!book) {
+  if (!book) {
     return res.json({ success: false, message: '未找到书目！' })
   } else if (!book.author.equals(userId)) {
     return res.json({ success: false, message: '没有权限更改！' })
   } else if (book.type === 'link' && !url) {
     return res.json({ success: false, message: '请填写链接地址！' })
   } else {
-    Book.findByIdAndUpdate(id, { $set: { title, category, url, content, anchors, updateTime: new Date(), description, image, share} }).exec().then((data) => {
+    Book.findByIdAndUpdate(id, { $set: { title, category, url, content, anchors, updateTime: new Date(), description, image, share } }).exec().then((data) => {
       if (data) {
         res.json({
           success: true,

@@ -2,12 +2,59 @@ import express from 'express';
 const router = express.Router();
 import axios from 'axios';
 import sha256 from '../utils/sha256';
-import {getMoonshotAiChat, getTongYiAiChat, getQianFanAiChat} from '../utils/api';
+import { getMoonshotAiChat, getTongYiAiChat, getQianFanAiChat } from '../utils/api';
 import Book from '../model/book';
 const jwt = require('../jwt');
 router.get('/', function (req, res, next) {
     res.send('respond with a resource');
 });
+router.post('/getAiChatStream', jwt.verify, async (req, res) => {
+    let {
+        id,
+        mode,
+        question,
+        autoSave = true
+    } = req.body;
+    let appId = req.headers.appid;
+    let messages = [], book;
+    if (id) {
+        book = await Book.findById(id);
+        if (book) {
+            messages = book.content ? JSON.parse(book.content) : []
+        }
+    }
+    console.log(messages);
+    let trunks = await getMoonshotAiChat([...messages], question, true);
+    let response = '';
+    res.writeHead(200, { 'Content-Type': 'text/event-stream' })
+    for await (const chunk of trunks) {
+        let delta = chunk.choices[0].delta
+        if (delta.content) {
+            response += delta.content;
+            res.write(`data: ${JSON.stringify(chunk)}\n\n`)
+        } else if (id || !autoSave) {
+            res.write(`data: ${JSON.stringify(chunk)}\n\n`)
+        }
+    }
+    if (autoSave) {
+        // 存储聊天记录
+        messages = messages.concat([{ role: "user", content: question }, { role: "assistant", content: response }])
+        console.log(messages);
+        if (book) {
+            book.content = JSON.stringify(messages);
+            book.save();
+        } else {
+            book = await Book.create({
+                title: question.slice(0, 8),
+                content: JSON.stringify(messages),
+                author: req._userId,
+                appId,
+                type: "chat"
+            })
+            res.write(`data: ${JSON.stringify({ id: book._id, Done: true })}\n\n`)
+        }
+    }
+})
 router.post('/getAiChat', jwt.verify, async (req, res) => {
     let {
         id,
@@ -31,7 +78,7 @@ router.post('/getAiChat', jwt.verify, async (req, res) => {
     if (id) {
         book = await Book.findById(id);
         if (book) {
-            messages = book.content?JSON.parse(book.content):[]
+            messages = book.content ? JSON.parse(book.content) : []
         }
     }
     let result = await func(messages, question);
@@ -51,7 +98,7 @@ router.post('/getAiChat', jwt.verify, async (req, res) => {
         }
         res.json({
             success: true,
-            data: {id: book._id, response: result.data}
+            data: { id: book._id, response: result.data }
         });
     } else {
         res.json({
