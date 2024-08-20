@@ -18,12 +18,11 @@ router.post('/login', (req, res) => {
     .then(data => {
       if (data) {
         if (data.password === req.body.password) {
-          let { _id, name, avatar } = data;
           let token = jwt.sign({ _id: data._id });
           res.json({
             success: true,
             message: '登录成功',
-            data: { token, _id, name, avatar },// 生成token，并传入用户_id
+            data: { token, user: data },// 生成token，并传入用户_id
           });
         } else {
           res.json({ success: false, message: '密码错误' });

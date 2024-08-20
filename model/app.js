@@ -37,6 +37,10 @@ var AppSchema = Schema({
     system: {
         type: Boolean,
         default: false
+    },
+    quick: {
+        type: Boolean,
+        default: false
     }
 })
 

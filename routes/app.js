@@ -9,11 +9,27 @@ router.get('/', function (req, res, next) {
 });
 // 获取应用
 router.get('/getApps', jwt.verify, async (req, res) => {
-  let user = await User.findById(req._userId).exec();
-  App.find({$or: [{author: req._userId}, {system: true}]}).exec().then(data => {
+  let type = req.query.type;
+  let query = {};
+  switch (type) {
+    case 'system':
+      query = {system: true}
+      break;
+    case 'user':
+      query = {author: req._userId}
+      break;
+    case 'quick':
+      query = {$or: [{$and: [{author: req._userId}, {quick: true}]}, {system: true}]};
+      break;
+    default:
+      query = {$or: [{author: req._userId}, {system: true}]};
+      break;
+  }
+  // let user = await User.findById(req._userId).exec();
+  App.find(query).exec().then(data => {
       res.json({
         success: true,
-        data: {editable: user.administrator, apps: data}
+        data: data
       });
     }).catch(e => {
       res.json({ success: false, message: e.message });
@@ -39,11 +55,11 @@ router.post('/createApp', jwt.verify, (req, res) => {
 });
 // 更新应用
 router.post('/updateApp', jwt.verify, (req, res) => {
-  let { _id, name, title, inner, url, icon, description } = req.body || {};
+  let { _id, name, title, inner, url, icon, description, quick, system } = req.body || {};
   if (!_id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  App.findByIdAndUpdate(_id, { $set: { name, title, inner, url, icon, description}}).exec().then((data) => {
+  App.findByIdAndUpdate(_id, { $set: { name, title, inner, url, icon, description, quick, system}}).exec().then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -55,7 +71,7 @@ router.post('/updateApp', jwt.verify, (req, res) => {
     }
   });
 });
-// 删除书籍
+// 删除应用
 router.post('/removeApp', jwt.verify, (req, res) => {
   let { id } = req.body || {};
   App.findByIdAndDelete(id).then((data) => {

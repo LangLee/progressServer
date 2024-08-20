@@ -37,7 +37,7 @@ router.get('/getOneNote', async (req, res) => {
         }).catch(() => {
             res.json({
                 success: false,
-                message: '获取失败！'
+                message: '获取每日一言失败！'
             })
         });
     } else {

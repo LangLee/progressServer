@@ -83,8 +83,8 @@ router.post('/upload', jwt.verify, upload.single('file'), (req, res) => {
     });
   });
 })
-// 路由处理文件下载
-router.get('/download', (req, res) => {
+// 预览
+router.get('/preview', (req, res) => {
   let fileName = req.query.file;
   Attachment.findOne({ name: fileName }).then((image) => {
     if (!image) {
@@ -104,31 +104,57 @@ router.get('/download', (req, res) => {
     });
   })
 });
-router.get('/delete', (req, res) => {
-    let fileName = req.query.file;
-    if (!fileName) {
+// 路由处理文件下载
+router.get('/download', (req, res) => {
+  let fileName = req.query.file;
+  Attachment.findOne({ name: fileName }).then((image) => {
+    if (!image) {
       res.json({
         success: false,
-        message: '文件名错误！'
+        message: '文件未找到！'
+      });
+    } else {
+      let { type, content } = image || {};
+      const base64 = content.toString('base64');
+      const base64String = `data:${type};base64,${base64}`;
+      console.log(base64String);
+      res.json({
+        success: true,
+        data: base64String
       });
     }
-    Attachment.findOneAndDelete({ name: fileName }).then((data) => {
-      if (data) {
-        res.json({
-          success: true,
-          message: '文件删除成功！'
-        });
-      } else {
-        res.json({
-          success: false,
-          message: '文件未找到！'
-        });
-      }
-    }).catch((error) => {
+  }).catch((error) => {
+    res.json({
+      success: false,
+      message: error.message
+    });
+  })
+});
+router.get('/delete', (req, res) => {
+  let fileName = req.query.file;
+  if (!fileName) {
+    res.json({
+      success: false,
+      message: '文件名错误！'
+    });
+  }
+  Attachment.findOneAndDelete({ name: fileName }).then((data) => {
+    if (data) {
+      res.json({
+        success: true,
+        message: '文件删除成功！'
+      });
+    } else {
       res.json({
         success: false,
-        message: error.message
-      })
+        message: '文件未找到！'
+      });
+    }
+  }).catch((error) => {
+    res.json({
+      success: false,
+      message: error.message
     })
-  });
+  })
+});
 export default router;

@@ -4,54 +4,72 @@
         "title": "我的图书",
         "icon": "book-2-fill",
         "url": "/books",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     },{
         "name": "schedule",
         "title": "图书日历",
         "icon": "calendar-2-fill",
         "url": "/schedule",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     },{
         "name": "ai",
         "title": " AI助手",
         "icon": "robot-3-fill",
         "url": "/robot",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     },{
         "name": "translate",
         "title": "中英翻译",
         "icon": "translate",
         "url": "/translation",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     }, {
         "name": "portal",
         "title": "传送门",
         "icon": "rocket-fill",
         "url": "/portals",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     }, {
         "name": "code",
         "title": "编码",
         "icon": "code-box-fill",
         "url": "/coding",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     }, {
         "name": "chat",
         "title": "聊天",
         "icon": "message-3-fill",
         "url": "/chat",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     }, {
         "name": "words",
         "title": "单词本",
         "icon": "book-read-fill",
         "url": "/words",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     }, {
         "name": "setting",
         "title": "设置",
         "icon": "settings-5-fill",
         "url": "/setting",
-        "inner": true
+        "inner": true,
+        "system": true,
+        "quick": true
     }
 ]
