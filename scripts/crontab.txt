@@ -1,1 +1,1 @@
-0 0 2 * * /root/progress-server/scripts/backup.sh
+0 2 * * * /root/progress-server/scripts/backup.sh

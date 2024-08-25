@@ -5,7 +5,6 @@ var Schema = mongoose.Schema
 var userSchema = Schema({
     name: {
         type: String,
-        required: true,
         unique: true
     },
     password: {
@@ -18,6 +17,18 @@ var userSchema = Schema({
                 },
                 msg: '密码长度必须大于6位',
             }]
+    },
+    mobile: {
+        type: String,
+        unique: true
+    },
+    email: {
+        type: String,
+        unique: true
+    },
+    wx_openid: {
+        type: String,
+        unique: true
     },
     administrator: {
         type: Boolean,

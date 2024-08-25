@@ -129,4 +129,45 @@ const getQianFanAiChat = async (messages, question)=>{
         }
     })
 }
-export { getWord, getOneNote, getDailyEnglish, getMoonshotAiChat, getQianFanAiChat, getTongYiAiChat }
+
+//微信小程序
+const WX_APPID='wx40228c524762c2d1';
+const WX_APP_SECRET = 'f5578a83e2394f6d4d69600c9d3a428a';
+const WX_ACCESS_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token';
+const getWXAccessToken = async () => {
+    const url = `${WX_ACCESS_TOKEN_URL}?grant_type=client_credential&appid=${WX_APPID}&secret=${WX_APP_SECRET}`
+    return axios.post(url).then((res) => {
+        if (res && res.data) {
+            return res.data.access_token;
+        }
+    });
+}
+const WX_UNLIMITED_QR_CODE_URL = 'https://api.weixin.qq.com/wxa/getwxacodeunlimit'
+const getUnlimitedQRCode = async (scene) => {
+    let token = await getWXAccessToken();
+    if (!token) {
+        return {
+            success: false,
+            message: "获取token失败"
+        }
+    }
+    const url = `${WX_UNLIMITED_QR_CODE_URL}?access_token=${token}`;
+    const params = {
+        scene: scene,
+        width: 280,
+        auto_color: true,
+        line_color: {
+            "r": "0",
+            "g":"0",
+        }
+    }
+    return axios.post(url, params, { responseType: 'arraybuffer' }).then((data) => {
+        if (data.data) {
+            return {
+                success: true,
+                data: data.data
+            };
+        }
+    })
+}
+export { getWord, getOneNote, getDailyEnglish, getMoonshotAiChat, getQianFanAiChat, getTongYiAiChat, getUnlimitedQRCode }

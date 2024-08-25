@@ -11,6 +11,7 @@ BACKUP_FILE="$BACKUP_DIR/mongodb-backup-$DATE.gz"
 mkdir -p $BACKUP_DIR
 # 使用 docker exec 在 MongoDB 容器内执行 mongodump  
 # 注意：确保你的 MongoDB 容器中的 mongodump 路径是正确的  
+docker exec -it $MONGO_CONTAINER mkdir -p $BACKUP_DIR
 docker exec -it $MONGO_CONTAINER mongodump --archive=$BACKUP_DIR/mongodb-backup-$DATE.gz --gzip
 #docker exec -it $MONGO_CONTAINER mongodump -d progress  --out=$BACKUP_DIR/mongodb-backup-$DATE --gzip
 docker cp mongodb:$BACKUP_DIR/mongodb-backup-$DATE.gz $BACKUP_DIR/mongodb-backup-$DATE.gz

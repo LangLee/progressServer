@@ -1,0 +1,1 @@
+import{aD as a,aE as n,aY as r}from"./vendor-CWXOCgin.js";const s={__name:"RemixIcon",props:{name:{type:String,required:!0}},setup(e){return(t,c)=>(a(),n("i",{class:r(`ri-${e.name}`)},null,2))}},m=s;export{m as R};

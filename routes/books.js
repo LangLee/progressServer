@@ -164,7 +164,8 @@ router.post('/createBook', jwt.verify, (req, res) => {
 // 更新书籍
 router.post('/updateBook', jwt.verify, async (req, res) => {
   let userId = req._userId;
-  let { id, title, content, anchors, url, category, description, image, share } = req.body || {};
+  let { _id, id, title, content, anchors, url, category, description, image, share } = req.body || {};
+  id = _id || id;
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };

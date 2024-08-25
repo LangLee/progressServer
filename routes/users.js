@@ -5,6 +5,7 @@ const jwt = require('../jwt');
 import mongoose from 'mongoose';
 import Attachment from '../model/attachment';
 import upload from '../utils/upload';
+import { getUnlimitedQRCode } from '../utils/api'
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
@@ -36,8 +37,9 @@ router.post('/login', (req, res) => {
 
 // 登录成功生成token
 router.post('/register', (req, res) => {
+  let {name, email, mobile, password} = req.body || {};
   User
-    .findOne({ name: req.body.name })
+    .findOne({ name })
     .exec()
     .then(data => {
       if (data) {
@@ -46,7 +48,7 @@ router.post('/register', (req, res) => {
           message: '用户已经存在'
         });
       } else {
-        User.create({ name: req.body.name, password: req.body.password }).then((data) => {
+        User.create({ name, mobile, email, password }).then((data) => {
           res.json({
             success: true,
             message: '注册成功',
@@ -58,9 +60,9 @@ router.post('/register', (req, res) => {
 });
 // 更新用户
 router.post('/update', (req, res) => {
-  let { _id, name, avatar } = req.body || {};
+  let { _id, name, avatar, mobile, email } = req.body || {};
   User
-    .findByIdAndUpdate(_id, { $set: { name: name, avatar: avatar } })
+    .findByIdAndUpdate(_id, { $set: { name: name, avatar: avatar, mobile, email } })
     .then(data => {
       if (data) {
         res.json({
@@ -75,7 +77,7 @@ router.post('/update', (req, res) => {
       }
     });
 });
-// 更新用户
+// 更新头像
 router.post('/uploadAvatar', jwt.verify, upload.single('avatar'), async (req, res) => {
   if (!req.file) {
     return res.json({
@@ -337,4 +339,27 @@ router.get('/getContactList', jwt.verify, (req, res) => {
       });
     });
 });
+router.get('/getQRCode', (req, res) => {
+  let scene = req.query.scene || '123';
+  getUnlimitedQRCode(scene).then(data => {
+    if (data && data.data) {
+      const base64 = data.data.toString('base64');
+      const base64String = `data:image/png;base64,${base64}`;
+      res.json({
+        success: true,
+        data: base64String
+      });
+    } else {
+      res.json({
+        success: false,
+        message: '获取二维码失败！'
+      });
+    }
+  }).catch(err => {
+    res.json({
+      success: false,
+      message: err.message
+    });
+  })
+})
 export default router;
