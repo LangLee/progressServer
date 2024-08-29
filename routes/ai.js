@@ -13,10 +13,14 @@ router.post('/getAiChatStream', jwt.verify, async (req, res) => {
         id,
         mode,
         question,
+        prompt,
         autoSave = true
     } = req.body;
     let appId = req.headers.appid;
-    let messages = [], book;
+    let messages=[], book;
+    if (prompt) {
+        messages = [{ role: 'system', content: prompt }]
+    }
     if (id) {
         book = await Book.findById(id);
         if (book) {
