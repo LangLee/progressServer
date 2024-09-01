@@ -1,6 +1,6 @@
 import Message from './model/message';
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 3001 });  
+const wss = new WebSocket.Server({ port: process.env.WS_PORT || 3001 });  
 const clients = {};  
   
 wss.on('connection', function connection(ws) {  

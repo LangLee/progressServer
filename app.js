@@ -14,9 +14,11 @@ import noteRouter from "./routes/note";
 import messageRouter from "./routes/message";
 import fileRouter from "./routes/file";
 import connectDB from "./model/db";
+import promptRouter from "./routes/prompt";
 import cors from "cors";
 import "./websocket";
 const app = express();
+require('dotenv').config();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -39,6 +41,7 @@ app.use('/word', wordRouter);
 app.use('/note', noteRouter);
 app.use('/message', messageRouter);
 app.use('/file', fileRouter);
+app.use('/prompt', promptRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
