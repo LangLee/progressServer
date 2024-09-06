@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import axios from 'axios';
-import sha256 from '../utils/sha256';
+import {sha256} from '../utils/sign';
 import { getMoonshotAiChat, getTongYiAiChat, getQianFanAiChat } from '../utils/api';
 import Book from '../model/book';
 const jwt = require('../jwt');

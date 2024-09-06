@@ -1,8 +1,11 @@
 const nodemailer = require('nodemailer');
 
-async function sendVerificationEmail(to, code) {
+const sendVerificationEmail = async (to, code) => {
     let transporter = nodemailer.createTransport({
-        service: `${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT}`,
+        service: process.env.EMAIL_SERVICE,
+        // host: process.env.EMAIL_HOST,
+        // port: process.env.EMAIL_PORT,
+        // secureConnection: true,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASSWORD
@@ -18,4 +21,7 @@ async function sendVerificationEmail(to, code) {
 
     return transporter.sendMail(mailOptions);
 }
-export default sendVerificationEmail;
+const sendVerificationMobile = async (to, code) => {
+    // TODO: Implement sending verification code via SMS
+}
+export {sendVerificationEmail, sendVerificationMobile};
