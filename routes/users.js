@@ -13,12 +13,13 @@ router.get('/', function (req, res, next) {
 
 // 登录成功生成token
 router.post('/login', (req, res) => {
+  let {name, password} = req.body || {};
   User
-    .findOne({ name: req.body.name })
+    .findOne({$or: [{ name }, { email: name }, { mobile: name }]})
     .exec()
     .then(data => {
       if (data) {
-        if (data.password === req.body.password) {
+        if (data.password === password) {
           let token = jwt.sign({ _id: data._id });
           res.json({
             success: true,
