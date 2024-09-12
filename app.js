@@ -27,10 +27,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.use(logger('dev'));
-const origins = process.env.CORS_ORIGIN.split(',');
+// const origins = process.env.CORS_ORIGIN.split(',');
 app.use(cors(
   {
-    origin: origins,
+    origin: function (origin, callback) {
+      // 允许所有origins
+      console.log(origin);
+      callback(null, true);
+    },
     credentials: true
   }
 ));
