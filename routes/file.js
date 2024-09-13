@@ -67,13 +67,16 @@ router.post('/upload', jwt.verify, upload.single('file'), (req, res) => {
       message: '上传失败！'
     });
   }
-  let { filename, mimetype, buffer } = req.file || {};
+  let { fieldname, originalname, mimetype, buffer } = req.file || {};
+  originalname = Buffer.from(originalname, "latin1").toString("utf8");
+  let filename = fieldname + '_' + Date.now() + '_' + originalname;
   Attachment.create({ name: filename, type: mimetype, content: buffer }).then((data) => {
     if (data) {
       let { name } = data;
       res.json({
         success: true,
-        data: { filename: name }
+        data: name,
+        message: '上传成功！'
       });
     }
   }).catch(() => {
