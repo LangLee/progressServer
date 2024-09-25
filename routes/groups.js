@@ -3,6 +3,7 @@ const router = express.Router();
 import Group from '../model/group'
 import Book from '../model/book'
 import User from '../model/user'
+import App from '../model/app'
 const jwt = require('../jwt');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -41,17 +42,24 @@ const getAllGroupAndBooks = async (userId, defaultGroup = true) => {
             return { success: false, message: err };
         });
 }
-const getAppAllGroupAndBooks = async (appId, userId, defaultGroup = true) => {
-    let groups = await Group.find({ appId, author: userId }).select('name').sort({ createTime: 'asc' }).exec().then((data) => {
+const getAppAllGroupAndBooks = async (appId, userId, defaultGroup = true, share = false) => {
+    let query = { appId }
+    if (userId) {
+        query.author = userId;
+    }
+    let groups = await Group.find(query).select('name').sort({ createTime: 'asc' }).exec().then((data) => {
         let groups = data && data.map(({ _id, name }) => ({ id: _id, name }));
         if (defaultGroup) {
-            groups.splice(0, 0, { id: 'default', name: '默认', readonly: true });
+            groups.splice(0, 0, { id: 'default', name: '未分类', readonly: true });
         }
         return groups;
     }).catch(err => {
         return { success: false, message: err };
     });
-    return Book.find({ appId, author: userId }).select('title createTime category type url appId share').sort({ createTime: 'desc' }).exec()
+    if (share) {
+        query.share = share;
+    }
+    return Book.find(query).select('title createTime category type url appId share').sort({ createTime: 'desc' }).exec()
         .then(data => {
             let groupBooks = {};
             if (data && data.length) {
@@ -66,6 +74,9 @@ const getAppAllGroupAndBooks = async (appId, userId, defaultGroup = true) => {
             groups.forEach(group => {
                 group.books = groupBooks[group.id];
             })
+            if (share) {
+                groups = groups.filter(({ books }) => books && books.length > 0)
+            }
             return {
                 success: true,
                 data: groups
@@ -86,6 +97,19 @@ router.get('/getAppGroupAndBooks', jwt.verify, async (req, res) => {
     let { defaultGroup } = req.query;
     defaultGroup = (defaultGroup === true || defaultGroup === 'true') ? true : false;
     let result = await getAppAllGroupAndBooks(appId, userId, defaultGroup);
+    res.json(result);
+})
+router.get('/getAppShareGroupAndBooks', async (req, res) => {
+    let appId = req.headers.appid;
+    let app = await App.findById(appId);
+    if (!app) {
+        return res.json({ success: false, message: '应用不存在！' })
+    } else if (!app.published) {
+        return res.json({ success: false, message: '应用未发布！' })
+    } else if (app.system) {
+        return res.json({ success: false, message: '系统应用不能分享！' })
+    }
+    let result = await getAppAllGroupAndBooks(appId, null, true, true);
     res.json(result);
 })
 // 获取门户和图书

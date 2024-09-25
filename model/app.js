@@ -41,6 +41,10 @@ var AppSchema = Schema({
     quick: {
         type: Boolean,
         default: false
+    },
+    published: {
+        type: Boolean,
+        default: false
     }
 })
 

@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import Book from '../model/book'
+import App from '../model/app'
 import dateFormatter from '../utils/dateFormat';
 import { story, storyWithoutTitle, helloworld, todoList } from '../template/book';
 const jwt = require('../jwt');
@@ -100,22 +101,19 @@ router.get('/getBookById', (req, res) => {
     .exec().then((data) => {
       if (data) {
         let { _id, title, content, url, type, author, anchors, share } = data;
-        jwt.execVerify(req, (error, data) => {
-          if (error) {
-            if (share) {
-              res.json({
-                success: true,
-                data: { _id, title, content, anchors, url, type, editable: false }
-              });
-            } else {
-              res.json({ success: false, message: '没有权限查看！' });
-            }
-          } else {
-            let userId = data._id;
+        jwt.execVerify(req).then((userId)=>{
             res.json({
               success: true,
               data: { _id, title, content, anchors, url, type, editable: author.equals(userId) }
             });
+        }).catch(()=>{
+          if (share) {
+            res.json({
+              success: true,
+              data: { _id, title, content, anchors, url, type, editable: false }
+            });
+          } else {
+            res.json({ success: false, message: '没有权限查看！' });
           }
         })
       } else {
@@ -224,9 +222,22 @@ router.post('/removeBook', jwt.verify, (req, res) => {
   });
 });
 // 查询书籍
-router.get('/searchBook', jwt.verify, (req, res) => {
+router.get('/searchBook', async (req, res) => {
   let { key = "" } = req.query || {};
-  Book.find({ '$or': [{ 'title': { $regex: key } }, { 'anchors': { $elemMatch: { 'textContent': { $regex: key } } } }] }).exec().then((data) => {
+  let appId = req.headers.appid;
+  let app = await App.findById(appId);
+  let query = { '$or': [{ 'title': { $regex: key } }, { 'anchors': { $elemMatch: { 'textContent': { $regex: key } } } }], appId }
+  if (app.published) {
+    query.share = true;
+  } else {
+    query.author = await jwt.execVerify(req).catch(()=>{
+      return res.json({
+        success: false,
+        message: '没有搜索权限！'
+      })
+    })
+  }
+  Book.find(query).exec().then((data) => {
     let books = [];
     if (data && data.length > 0) {
       books = data.map(({ id, title, appId, anchors }) => {

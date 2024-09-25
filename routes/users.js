@@ -13,9 +13,9 @@ router.get('/', function (req, res, next) {
 
 // 登录成功生成token
 router.post('/login', (req, res) => {
-  let {name, password} = req.body || {};
+  let { name, password } = req.body || {};
   User
-    .findOne({$or: [{ name }, { email: name }, { mobile: name }]})
+    .findOne({ $or: [{ name }, { email: name }, { mobile: name }] })
     .exec()
     .then(data => {
       if (data) {
@@ -38,7 +38,7 @@ router.post('/login', (req, res) => {
 
 // 登录成功生成token
 router.post('/register', (req, res) => {
-  let {name, email, mobile, password} = req.body || {};
+  let { name, email, mobile, password } = req.body || {};
   User
     .findOne({ name })
     .exec()
@@ -113,7 +113,7 @@ router.post('/uploadAvatar', jwt.verify, upload.single('avatar'), async (req, re
   let { fieldname, originalname, mimetype, buffer } = req.file || {};
   originalname = Buffer.from(originalname, "latin1").toString("utf8");
   let filename = fieldname + '_' + Date.now() + '_' + originalname;
-  Attachment.create({ name: filename, type: mimetype, content: buffer, createBy: userId}).then((data) => {
+  Attachment.create({ name: filename, type: mimetype, content: buffer, createBy: userId }).then((data) => {
     if (data) {
       user.$set({ avatar: filename });
       user.save().then((data) => {
@@ -217,27 +217,24 @@ router.post('/removeAvatar', jwt.verify, async (req, res) => {
 });
 
 // 获取用户列表
-router.get('/getLoginUser', jwt.verify, (req, res) => {
-  let userId = req._userId;
-  User
-    .findOne({ _id: userId }).then(data => {
-      if (data) {
-        res.json({
-          success: true,
-          data: data
-        });
-      } else {
-        res.json({
-          success: false,
-          message: '获取用户信息失败'
-        })
-      }
-    }).catch(() => {
-      res.json({
-        success: false,
-        message: '获取用户信息失败'
-      });
-    });
+router.get('/getLoginUser', async (req, res) => {
+  jwt.execVerify(req).then((userId) => {
+    User
+      .findOne({ _id: userId }).then(data => {
+        if (data) {
+          res.json({
+            success: true,
+            data: data
+          });
+        } else {
+          res.json({
+            success: false
+          })
+        }
+      })
+  }).catch(() => {
+    res.json({ success: false })
+  })
 });
 // 获取用户列表
 router.get('/getContactList', jwt.verify, (req, res) => {

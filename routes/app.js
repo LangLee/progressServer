@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import App from '../model/app'
-import User from '../model/user'
+import Book from '../model/book'
 const jwt = require('../jwt');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -10,6 +10,7 @@ router.get('/', function (req, res, next) {
 // 获取应用
 router.get('/getApps', jwt.verify, async (req, res) => {
   let type = req.query.type;
+  let url = req.query.url;
   let query = {};
   switch (type) {
     case 'system':
@@ -24,6 +25,9 @@ router.get('/getApps', jwt.verify, async (req, res) => {
     default:
       query = {$or: [{author: req._userId}, {system: true}]};
       break;
+  }
+  if (url) {
+    query.url = url;
   }
   // let user = await User.findById(req._userId).exec();
   App.find(query).exec().then(data => {
@@ -69,6 +73,41 @@ router.post('/updateApp', jwt.verify, (req, res) => {
     } else {
       res.json({ success: false, message: '更新失败！' });
     }
+  });
+});
+// 发布应用
+router.post('/publishApp', jwt.verify, (req, res) => {
+  let { _id, published, publishAll=true } = req.body || {};
+  let userId = req._userId;
+  let errMes = `${published?'':'取消'}发布失败！`;
+  let sucMes = `${published?'':'取消'}发布成功！`;
+  if (!_id) {
+    res.json({ success: false, message: errMes });
+  };
+  App.findByIdAndUpdate(_id, { $set: { published}}).exec().then((data) => {
+    if (data) {
+      if(publishAll) {
+        Book.updateMany({ appId: _id, author: userId}, { share: published }).then(() => {
+          return res.json({
+            success: true,
+            message: sucMes,
+            data: data
+          });
+        }).catch((err) => {
+          return res.json({ success: false, message: err.message });
+        })
+      } else {
+        return res.json({
+          success: true,
+          message: sucMes,
+          data: data
+        });
+      }
+    } else {
+      res.json({ success: false, message: errMes });
+    }
+  }).catch((err) => {
+    return res.json({ success: false, message: err.message });
   });
 });
 // 删除应用
