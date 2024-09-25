@@ -56,7 +56,27 @@ import Attachment from '../model/attachment';
 //     }
 //   });
 // });
-
+router.get('/getFiles', jwt.verify,(req, res) => {
+  let userId = req._userId;
+  Attachment.find({ createBy: userId }).select('name type createTime').then((files) => {
+    if (!files) {
+      res.json({
+        success: false,
+        message: '文件未找到！'
+      });
+    } else {
+      res.json({
+        success: true,
+        data: files
+      });
+    }
+  }).catch((error) => {
+    res.json({
+      success: false,
+      message: error.message
+    });
+  })
+});
 // 数据库存储
 // 路由处理文件下载  
 router.post('/upload', jwt.verify, upload.single('file'), (req, res) => {
@@ -70,7 +90,7 @@ router.post('/upload', jwt.verify, upload.single('file'), (req, res) => {
   let { fieldname, originalname, mimetype, buffer } = req.file || {};
   originalname = Buffer.from(originalname, "latin1").toString("utf8");
   let filename = fieldname + '_' + Date.now() + '_' + originalname;
-  Attachment.create({ name: filename, type: mimetype, content: buffer }).then((data) => {
+  Attachment.create({ name: filename, type: mimetype, content: buffer, createBy: req._userId }).then((data) => {
     if (data) {
       let { name } = data;
       res.json({
@@ -133,15 +153,16 @@ router.get('/download', (req, res) => {
     });
   })
 });
-router.get('/delete', (req, res) => {
+router.get('/delete', jwt.verify, (req, res) => {
   let fileName = req.query.file;
+  let userId = req._userId;
   if (!fileName) {
     res.json({
       success: false,
       message: '文件名错误！'
     });
   }
-  Attachment.findOneAndDelete({ name: fileName }).then((data) => {
+  Attachment.findOneAndDelete({ name: fileName, createBy: userId }).then((data) => {
     if (data) {
       res.json({
         success: true,

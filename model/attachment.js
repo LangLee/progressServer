@@ -15,6 +15,14 @@ var attachmentSchema = Schema({
     content: {
         type: Buffer,
         required: true
+    },
+    createTime: {
+        type: Date,
+        default: Date.now
+    },
+    createBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'user'
     }
 })
 

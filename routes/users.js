@@ -113,7 +113,7 @@ router.post('/uploadAvatar', jwt.verify, upload.single('avatar'), async (req, re
   let { fieldname, originalname, mimetype, buffer } = req.file || {};
   originalname = Buffer.from(originalname, "latin1").toString("utf8");
   let filename = fieldname + '_' + Date.now() + '_' + originalname;
-  Attachment.create({ name: filename, type: mimetype, content: buffer }).then((data) => {
+  Attachment.create({ name: filename, type: mimetype, content: buffer, createBy: userId}).then((data) => {
     if (data) {
       user.$set({ avatar: filename });
       user.save().then((data) => {
