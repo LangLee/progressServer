@@ -170,4 +170,25 @@ const getUnlimitedQRCode = async (scene) => {
         }
     })
 }
-export { getWord, getOneNote, getDailyEnglish, getMoonshotAiChat, getQianFanAiChat, getTongYiAiChat, getUnlimitedQRCode }
+// 今日热榜，https://hot.imsyy.top
+const HOT_URL = 'https://api-hot.imsyy.top';
+const getHotTops = async (type) => {
+    const url = `${HOT_URL}/${type}?cache=true`
+    return axios.get(url).then((res) => {
+        if (res && res.data) {
+            return {
+                success: true,
+                data: res.data
+            }
+        } else {
+            return {
+                success: false
+            }
+        }
+    }).catch(err => {
+        return {
+            success: false
+        }
+    });
+}
+export { getWord, getOneNote, getDailyEnglish, getMoonshotAiChat, getQianFanAiChat, getTongYiAiChat, getUnlimitedQRCode, getHotTops }

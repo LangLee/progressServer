@@ -360,4 +360,26 @@ router.get('/getQRCode', (req, res) => {
     });
   })
 })
+// 获取用户列表
+router.get('/getUserList', jwt.verify, async (req, res) => {
+  let userId = req._userId;
+  let currentUser = await User.findById(userId);
+  if (!currentUser.administrator) {
+    return res.json({
+      success: false,
+      message: "没有查询用户权限！"
+    });
+  }
+  User.find().select("name email mobile avatar").then(data => {
+      res.json({
+        success: true,
+        data: data || []
+      });
+    }).catch((err) => {
+      res.json({
+        success: false,
+        message: err.message
+      });
+    });
+});
 export default router;

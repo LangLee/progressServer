@@ -18,6 +18,7 @@ import fileRouter from "./routes/file";
 import connectDB from "./model/db";
 import promptRouter from "./routes/prompt";
 import verificationRouter from "./routes/verification";
+import apiRouter from "./routes/api";
 import cors from "cors";
 import "./websocket";
 const app = express();
@@ -65,6 +66,7 @@ app.use('/message', messageRouter);
 app.use('/file', fileRouter);
 app.use('/prompt', promptRouter);
 app.use('/verification', verificationRouter);
+app.use('/api', apiRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
