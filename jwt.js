@@ -4,7 +4,7 @@ const secretKey = 'elephant'; //密钥
 // 生成token
 export const sign = (data = {}) => {
 	return jwt.sign(data, secretKey, {
-		expiresIn: '30d',
+		expiresIn: '1y',
 	});
 };
 

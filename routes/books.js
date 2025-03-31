@@ -124,10 +124,19 @@ router.get('/getBookById', (req, res) => {
     })
 });
 // 创建书籍
-router.post('/createBook', jwt.verify, (req, res) => {
+router.post('/createBook', jwt.verify, async (req, res) => {
   let { title, content, type, category, url } = req.body || {};
   let userId = req._userId;
   let appId = req.headers.appid;
+  if (!appId) {
+    let defaultApp = await App.findOne({ name: 'book', inner: true }).exec();
+    if (defaultApp) {
+      appId = defaultApp._id;
+    } else {
+      res.json({ success: false, message: '请先创建应用！' });
+      return;
+    }
+  }
   let template;
   switch (type) {
     case 'code':
@@ -268,4 +277,35 @@ router.get('/searchAppBook', jwt.verify, (req, res) => {
     });
   });
 });
+// 获取默认应用（我的书籍）下的书籍列表
+router.get('/getDefaultAppBooks', jwt.verify, async(req, res) => {
+  let { sort = { createTime: 'desc' } } = req.query;
+  let userId = req._userId;
+  let app = await App.findOne({ name: 'book', inner: true });
+  if (!app) {
+    return res.json({
+      success: false,
+      message: '没有找到默认应用！'
+    })
+  }
+  Book.find({ author: userId, appId: app._id }).select('title createTime type url appId image').sort(sort)
+   .exec()
+   .then(data => {
+     let books = data && data.length && data.map(({ _id, title, createTime, type, url, appId }) => {
+       return {
+         _id,
+         title,
+         createTime: dateFormatter.format(new Date(createTime)),
+         type,
+         url,
+         appId,
+         image
+       }
+     })
+     res.json({
+       success: true,
+       data: books
+     })
+   })
+})
 export default router;

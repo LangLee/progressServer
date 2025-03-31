@@ -6,14 +6,50 @@ import mongoose from 'mongoose';
 import Attachment from '../model/attachment';
 import upload from '../utils/upload';
 import { getUnlimitedQRCode } from '../utils/api'
+import axios from 'axios';
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
 });
 
 // 登录成功生成token
-router.post('/login', (req, res) => {
-  let { name, password } = req.body || {};
+router.post('/login', async (req, res) => {
+  let { name, password, type = "password" } = req.body || {};
+  if (type === "wx") {
+    let { code, userInfo } = req.body || {};
+    if (!code) {
+      return res.status(400).send('Code not found');
+    }
+    try {
+      const response = await axios.get(`https://api.weixin.qq.com/sns/oauth2/access_token?appid=wx40228c524762c2d1&secret=f5578a83e2394f6d4d69600c9d3a428a&code=${code}&grant_type=authorization_code`);
+      const data = await response.json();
+      const { openid } = data;
+      User
+        .findOne({ wx_openid: openid })
+        .exec()
+        .then(data => {
+          if (data) {
+            let token = jwt.sign({ _id: data._id });
+            res.json({
+              success: true,
+              message: '登录成功',
+              data: { token, user: data },// 生成token，并传入用户_id
+            });
+          } else {
+            User.create({ wx_openid: openid, name: userInfo?.nickName, avatar: userInfo?.avatarUrl, password: '123456' }).then((data) => {
+              let token = jwt.sign({ _id: data._id });
+              res.json({
+                success: true,
+                message: '登录成功',
+                data: { token, user: data },// 生成token，并传入用户_id
+              });
+            })
+          }
+        })
+    } catch (error) {
+      res.json({ success: false, message: error.message });
+    }
+  }
   User
     .findOne({ $or: [{ name }, { email: name }, { mobile: name }] })
     .exec()
@@ -371,15 +407,21 @@ router.get('/getUserList', jwt.verify, async (req, res) => {
     });
   }
   User.find().select("name email mobile avatar").then(data => {
-      res.json({
-        success: true,
-        data: data || []
-      });
-    }).catch((err) => {
-      res.json({
-        success: false,
-        message: err.message
-      });
+    res.json({
+      success: true,
+      data: data || []
     });
+  }).catch((err) => {
+    res.json({
+      success: false,
+      message: err.message
+    });
+  });
+});
+router.get('/verify', jwt.verify, async (req, res) => {
+  res.json({
+    success: true,
+    message: '验证成功！'
+  })
 });
 export default router;

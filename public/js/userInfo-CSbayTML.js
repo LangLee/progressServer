@@ -1,0 +1,1 @@
+import{d as o}from"./file-D7E9LNHg.js";import{aj as t}from"./vendor-DqHIQWU1.js";const r=t(),f=e=>{r.value=e},d=()=>r.value,i=()=>{var e;return(e=r.value)==null?void 0:e._id},I=()=>r,s={},a=e=>(s[e]==null&&(s[e]=o(e).then(n=>(s[e]=n||"",n)).catch(()=>(s[e]="",""))),s[e]);export{i as a,a as b,d as g,f as s,I as u};

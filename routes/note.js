@@ -120,5 +120,4 @@ router.post('/removeNote', jwt.verify, async (req, res) => {
         })
     });
 })
-
 export default router;
