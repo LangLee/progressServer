@@ -21,8 +21,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).send('Code not found');
     }
     try {
-      const response = await axios.get(`https://api.weixin.qq.com/sns/oauth2/access_token?appid=wx40228c524762c2d1&secret=f5578a83e2394f6d4d69600c9d3a428a&code=${code}&grant_type=authorization_code`);
-      const data = await response.json();
+      const data = await axios.get(`https://api.weixin.qq.com/sns/oauth2/access_token?appid=wx40228c524762c2d1&secret=f5578a83e2394f6d4d69600c9d3a428a&code=${code}&grant_type=authorization_code`);
+      if (data.errcode) {
+        return res.status(400).send(data.errmsg);
+      }
       const { openid } = data;
       User
         .findOne({ wx_openid: openid })

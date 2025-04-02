@@ -291,7 +291,7 @@ router.get('/getDefaultAppBooks', jwt.verify, async(req, res) => {
   Book.find({ author: userId, appId: app._id }).select('title createTime type url appId image').sort(sort)
    .exec()
    .then(data => {
-     let books = data && data.length && data.map(({ _id, title, createTime, type, url, appId }) => {
+     let books = data && data.length && data.map(({ _id, title, createTime, type, url, appId, image }) => {
        return {
          _id,
          title,
