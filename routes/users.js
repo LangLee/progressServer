@@ -7,6 +7,8 @@ import Attachment from '../model/attachment';
 import upload from '../utils/upload';
 import { getUnlimitedQRCode } from '../utils/api'
 import axios from 'axios';
+import md5 from 'md5';
+import {v4} from 'uuid'
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
@@ -32,15 +34,15 @@ router.post('/login', async (req, res) => {
         .then(data => {
           if (data) {
             let token = jwt.sign({ _id: data._id });
-            res.json({
+            return res.json({
               success: true,
               message: '登录成功',
               data: { token, user: data },// 生成token，并传入用户_id
             });
           } else {
-            User.create({ wx_openid: openid, name: userInfo?.nickName, avatar: userInfo?.avatarUrl, password: '123456' }).then((data) => {
+            User.create({ wx_openid: openid, name: userInfo?.nickName, avatar: userInfo?.avatarUrl, password: md5('123456') }).then((data) => {
               let token = jwt.sign({ _id: data._id });
-              res.json({
+              return res.json({
                 success: true,
                 message: '登录成功',
                 data: { token, user: data },// 生成token，并传入用户_id
@@ -49,10 +51,10 @@ router.post('/login', async (req, res) => {
           }
         })
     } catch (error) {
-      res.json({ success: false, message: error.message });
+      return res.json({ success: false, message: error.message });
     }
-  }
-  User
+  } else {
+    User
     .findOne({ $or: [{ name }, { email: name }, { mobile: name }] })
     .exec()
     .then(data => {
@@ -71,6 +73,7 @@ router.post('/login', async (req, res) => {
         res.json({ success: false, message: '用户名不存在，请先注册' });
       }
     });
+  }
 });
 
 
@@ -376,14 +379,17 @@ router.get('/getContactList', jwt.verify, (req, res) => {
     });
 });
 router.get('/getQRCode', (req, res) => {
-  let scene = req.query.scene || '123';
+  let scene = v4();
   getUnlimitedQRCode(scene).then(data => {
     if (data && data.data) {
       const base64 = data.data.toString('base64');
       const base64String = `data:image/png;base64,${base64}`;
       res.json({
         success: true,
-        data: base64String
+        data: {
+          scene,
+          image: base64String
+        }
       });
     } else {
       res.json({

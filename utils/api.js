@@ -153,6 +153,7 @@ const getUnlimitedQRCode = async (scene) => {
     }
     const url = `${WX_UNLIMITED_QR_CODE_URL}?access_token=${token}`;
     const params = {
+        page:"pages/login/login",
         scene: scene,
         width: 280,
         auto_color: true,
