@@ -132,7 +132,7 @@ const getQianFanAiChat = async (messages, question)=>{
 
 //微信小程序
 const WX_APPID='wx40228c524762c2d1';
-const WX_APP_SECRET = 'f5578a83e2394f6d4d69600c9d3a428a';
+const WX_APP_SECRET = '98a97fa4f5d40734cbeb9423f1437995';
 const WX_ACCESS_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token';
 const getWXAccessToken = async () => {
     const url = `${WX_ACCESS_TOKEN_URL}?grant_type=client_credential&appid=${WX_APPID}&secret=${WX_APP_SECRET}`
@@ -155,18 +155,13 @@ const getUnlimitedQRCode = async (scene) => {
     const params = {
         page:"pages/login/login",
         scene: scene,
-        width: 280,
-        auto_color: true,
-        line_color: {
-            "r": "0",
-            "g":"0",
-        }
+        width: 280
     }
     return axios.post(url, params, { responseType: 'arraybuffer' }).then((data) => {
-        if (data.data) {
+        if (data) {
             return {
                 success: true,
-                data: data.data
+                buffer: data?.data
             };
         }
     })

@@ -8,7 +8,8 @@ import upload from '../utils/upload';
 import { getUnlimitedQRCode } from '../utils/api'
 import axios from 'axios';
 import md5 from 'md5';
-import {v4} from 'uuid'
+import { v4 } from 'uuid'
+import redis from '../redis';
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
@@ -18,7 +19,7 @@ router.get('/', function (req, res, next) {
 router.post('/login', async (req, res) => {
   let { name, password, type = "password" } = req.body || {};
   if (type === "wx") {
-    let { code, userInfo } = req.body || {};
+    let { code, userInfo, scene } = req.body || {};
     if (!code) {
       return res.status(400).send('Code not found');
     }
@@ -28,51 +29,44 @@ router.post('/login', async (req, res) => {
         return res.status(400).send(data.errmsg);
       }
       const { openid } = data;
-      User
+      let user = await User
         .findOne({ wx_openid: openid })
-        .exec()
-        .then(data => {
-          if (data) {
-            let token = jwt.sign({ _id: data._id });
-            return res.json({
-              success: true,
-              message: '登录成功',
-              data: { token, user: data },// 生成token，并传入用户_id
-            });
-          } else {
-            User.create({ wx_openid: openid, name: userInfo?.nickName, avatar: userInfo?.avatarUrl, password: md5('123456') }).then((data) => {
-              let token = jwt.sign({ _id: data._id });
-              return res.json({
-                success: true,
-                message: '登录成功',
-                data: { token, user: data },// 生成token，并传入用户_id
-              });
-            })
-          }
-        })
+        .exec();
+      if (!user) {
+        user = await User.create({ wx_openid: openid, name: userInfo?.nickName, avatar: userInfo?.avatarUrl, password: md5('123456') });
+      }
+      let token = jwt.sign({ _id: user._id });
+      if (scene) {
+        await redis.set(scene, JSON.stringify({token, user, isLogin: true}))
+      }
+      return res.json({
+        success: true,
+        message: '登录成功',
+        data: { token, user },// 生成token，并传入用户_id
+      });
     } catch (error) {
       return res.json({ success: false, message: error.message });
     }
   } else {
     User
-    .findOne({ $or: [{ name }, { email: name }, { mobile: name }] })
-    .exec()
-    .then(data => {
-      if (data) {
-        if (data.password === password) {
-          let token = jwt.sign({ _id: data._id });
-          res.json({
-            success: true,
-            message: '登录成功',
-            data: { token, user: data },// 生成token，并传入用户_id
-          });
+      .findOne({ $or: [{ name }, { email: name }, { mobile: name }] })
+      .exec()
+      .then(data => {
+        if (data) {
+          if (data.password === password) {
+            let token = jwt.sign({ _id: data._id });
+            res.json({
+              success: true,
+              message: '登录成功',
+              data: { token, user: data },// 生成token，并传入用户_id
+            });
+          } else {
+            res.json({ success: false, message: '密码错误' });
+          }
         } else {
-          res.json({ success: false, message: '密码错误' });
+          res.json({ success: false, message: '用户名不存在，请先注册' });
         }
-      } else {
-        res.json({ success: false, message: '用户名不存在，请先注册' });
-      }
-    });
+      });
   }
 });
 
@@ -379,11 +373,26 @@ router.get('/getContactList', jwt.verify, (req, res) => {
     });
 });
 router.get('/getQRCode', (req, res) => {
-  let scene = v4();
-  getUnlimitedQRCode(scene).then(data => {
-    if (data && data.data) {
-      const base64 = data.data.toString('base64');
+  try {
+    const scene = v4().replace(/-/g, '').substring(0, 32);// 生成唯一标识符
+    getUnlimitedQRCode(scene).then(data => {
+      if (!data || !data.buffer || !(data.buffer instanceof Buffer)) {
+        return res.status(500).json({
+          success: false,
+          message: '二维码数据格式错误！'
+        });
+      }
+      const base64 = data.buffer.toString('base64');
       const base64String = `data:image/png;base64,${base64}`;
+
+      if (scene) {
+        redis.set(scene, JSON.stringify({ isLogin: false }), 60 * 3, (err) => {
+          if (err) {
+            console.error('Redis 设置失败:', err);
+          }
+        });
+      }
+
       res.json({
         success: true,
         data: {
@@ -391,19 +400,21 @@ router.get('/getQRCode', (req, res) => {
           image: base64String
         }
       });
-    } else {
-      res.json({
+    }).catch(err => {
+      console.error('获取二维码失败:', err.message);
+      res.status(500).json({
         success: false,
         message: '获取二维码失败！'
       });
-    }
-  }).catch(err => {
-    res.json({
-      success: false,
-      message: err.message
     });
-  })
-})
+  } catch (error) {
+    console.error('服务器内部错误:', error.message);
+    res.status(500).json({
+      success: false,
+      message: '服务器内部错误！'
+    });
+  }
+});
 // 获取用户列表
 router.get('/getUserList', jwt.verify, async (req, res) => {
   let userId = req._userId;
@@ -431,5 +442,34 @@ router.get('/verify', jwt.verify, async (req, res) => {
     success: true,
     message: '验证成功！'
   })
+});
+router.get('/checkLogin', async (req, res) => {
+  if (!req.query.scene) {
+    return res.json({
+      success: false,
+      message: '验证失败！'
+    })
+  } else {
+    let data = await redis.get(req.query.scene);
+    if (!data) {
+      return res.json({
+        success: false,
+        message: '验证失败！'
+      })
+    }
+    data = JSON.parse(data);
+    if (data.isLogin) {
+      return res.json({
+        success: true,
+        message: '登录成功！',
+        data: data
+      })
+    } else {
+      return res.json({
+        success: true,
+        data: data
+      })
+    }
+  }
 });
 export default router;
