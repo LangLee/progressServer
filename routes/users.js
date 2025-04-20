@@ -33,7 +33,7 @@ router.post('/login', async (req, res) => {
         .findOne({ wx_openid: openid })
         .exec();
       if (!user) {
-        user = await User.create({ wx_openid: openid, name: userInfo?.nickName, avatar: userInfo?.avatarUrl, password: md5('123456') });
+        user = await User.create({ wx_openid: openid, name: `用户${v4().replace(/-/g, '').substring(0, 8)}`, avatar: userInfo?.avatarUrl, password: md5('123456') });
       }
       let token = jwt.sign({ _id: user._id });
       if (scene) {

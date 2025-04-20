@@ -15,7 +15,7 @@ router.get('/getAllBooks', (req, res) => {
   .select('title updateTime category type url appId description author share').sort(sort)
     .exec()
     .then(data => {
-      let books = data && data.length && data.map(({ _id, title, updateTime, category, type, url, appId, description, author, share }) => {
+      let books = data && data.length && data.map(({ _id, title, updateTime, category, type, url, appId, description, author, share, image }) => {
         return {
           _id,
           title,
@@ -26,6 +26,7 @@ router.get('/getAllBooks', (req, res) => {
           description,
           author: author.name,
           share,
+          image,
           updateTime: dateFormatter.format(new Date(updateTime))
         }
       })
@@ -69,10 +70,10 @@ router.get('/getAppBooks', jwt.verify, (req, res) => {
   let { sort = { createTime: 'desc' } } = req.query;
   let userId = req._userId;
   let appId = req.headers.appid;
-  Book.find({ author: userId, appId }).select('title createTime category type url appId share').sort(sort)
+  Book.find({ author: userId, appId }).select('title createTime category type url appId share description image').sort(sort)
     .exec()
     .then(data => {
-      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId, share }) => {
+      let books = data && data.length && data.map(({ _id, title, createTime, category, type, url, appId, share, description, image }) => {
         return {
           _id,
           title,
@@ -81,7 +82,8 @@ router.get('/getAppBooks', jwt.verify, (req, res) => {
           type,
           url,
           appId,
-          share
+          share,
+          description, image
         }
       })
       res.json({
@@ -101,17 +103,17 @@ router.get('/getBookById', (req, res) => {
   Book.findById(req.query.id)
     .exec().then((data) => {
       if (data) {
-        let { _id, title, content, url, type, author, anchors, share } = data;
+        let { _id, title, content, url, type, author, anchors, share, description, image } = data;
         jwt.execVerify(req).then((userId)=>{
             res.json({
               success: true,
-              data: { _id, title, content, anchors, url, type, editable: author.equals(userId) }
+              data: { _id, title, content, anchors, url, type, editable: author.equals(userId), share, description, image }
             });
         }).catch(()=>{
           if (share) {
             res.json({
               success: true,
-              data: { _id, title, content, anchors, url, type, editable: false }
+              data: { _id, title, content, anchors, url, type, editable: false, share, description, image }
             });
           } else {
             res.json({ success: false, message: '没有权限查看！' });
@@ -289,10 +291,10 @@ router.get('/getDefaultAppBooks', jwt.verify, async(req, res) => {
       message: '没有找到默认应用！'
     })
   }
-  Book.find({ author: userId, appId: app._id }).select('title createTime type url appId image').sort(sort)
+  Book.find({ author: userId, appId: app._id }).select('title createTime type url appId image description').sort(sort)
    .exec()
    .then(data => {
-     let books = data && data.length && data.map(({ _id, title, createTime, type, url, appId, image }) => {
+     let books = data && data.length && data.map(({ _id, title, createTime, type, url, appId, image, description }) => {
        return {
          _id,
          title,
@@ -300,7 +302,8 @@ router.get('/getDefaultAppBooks', jwt.verify, async(req, res) => {
          type,
          url,
          appId,
-         image
+         image,
+         description
        }
      })
      res.json({

@@ -1,5 +1,6 @@
 import express from 'express';
 import upload from '../utils/upload'
+import sharp from 'sharp';
 const router = express.Router();
 const jwt = require('../jwt');
 // const fs = require('fs');
@@ -106,9 +107,10 @@ router.post('/upload', jwt.verify, upload.single('file'), (req, res) => {
     });
   });
 })
-// 预览
 router.get('/preview', (req, res) => {
   let fileName = req.query.file;
+  let thumbnail = req.query.thumbnail === 'true'; // 增加一个参数来决定是否压缩
+
   Attachment.findOne({ name: fileName }).then((image) => {
     if (!image) {
       res.json({
@@ -117,15 +119,33 @@ router.get('/preview', (req, res) => {
       });
     } else {
       let { type, content } = image || {};
-      res.set('Content-Type', type);
-      res.send(content);
+
+      if (thumbnail) {
+        // 使用sharp压缩图片
+        sharp(content)
+          .resize(200, 200) // 设置缩略图尺寸
+          .toBuffer()
+          .then((buffer) => {
+            res.set('Content-Type', type);
+            res.send(buffer);
+          })
+          .catch((error) => {
+            res.json({
+              success: false,
+              message: '图片压缩失败！'
+            });
+          });
+      } else {
+        res.set('Content-Type', type);
+        res.send(content);
+      }
     }
   }).catch((error) => {
     res.json({
       success: false,
       message: error.message
     });
-  })
+  });
 });
 // 路由处理文件下载
 router.get('/download', (req, res) => {
