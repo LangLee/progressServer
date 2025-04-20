@@ -12,7 +12,7 @@ router.get('/', function (req, res, next) {
 router.get('/getAllBooks', (req, res) => {
   let { sort = { updateTime: 'desc' } } = req.query;
   Book.find({ share: true }).populate('author', 'name')
-  .select('title updateTime category type url appId description author share').sort(sort)
+  .select('title updateTime category type url appId description author share image').sort(sort)
     .exec()
     .then(data => {
       let books = data && data.length && data.map(({ _id, title, updateTime, category, type, url, appId, description, author, share, image }) => {
