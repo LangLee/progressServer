@@ -125,10 +125,16 @@ router.get('/getPortalAndBooks', jwt.verify, async (req, res) => {
     }
 })
 //创建分组
-router.post('/createGroup', jwt.verify, (req, res) => {
-    let { name } = req.body || {};
+router.post('/createGroup', jwt.verify, async (req, res) => {
+    let { name, appId } = req.body || {};
     let userId = req._userId;
-    let appId = req.headers.appid;
+    appId = appId || req.headers.appid;
+    if (!appId) {
+        let defaultApp = await App.findOne({ name: 'book', inner: true });
+        if (defaultApp) {
+            appId = defaultApp._id;
+        }
+    }
     Group.create({ name, author: userId, appId }).then((data) => {
         if (data) {
             res.json({
@@ -172,5 +178,45 @@ router.post('/removeGroup', jwt.verify, (req, res) => {
         }
     });
 });
-
+router.post('/getAppGroups', jwt.verify, (req, res) => {
+    let { sort = { createTime: 'desc' } } = req.query;
+    let userId = req._userId;
+    let appId = req.headers.appid;
+    Group.find({ author: userId, appId }).select('name').sort(sort).exec().then((data) => {
+        if (data) {
+            res.json({
+                success: true,
+                data: data
+            });
+        } else {
+            res.json({ success: false, message: '获取分类失败！' });
+        }
+    }).catch(err => {
+        res.json({ success: false, message: err });
+    });
+});
+router.get('/getDefaultAppGroups', jwt.verify, async(req, res) => {
+    let { sort = { createTime: 'desc' } } = req.query;
+    let userId = req._userId;
+    let app = await App.findOne({ name: 'book', inner: true });
+    if (!app) {
+      return res.json({
+        success: false,
+        message: '没有找到默认应用！'
+      })
+    } else {
+        Group.find({ author: userId, appId: app._id }).select('name').sort(sort).exec().then((data) => {
+            if (data) {
+                res.json({
+                    success: true,
+                    data: data
+                });
+            } else {
+                res.json({ success: false, message: '获取分类失败！' });
+            }
+        }).catch(err => {
+            res.json({ success: false, message: err });
+        })
+    }
+});
 export default router;

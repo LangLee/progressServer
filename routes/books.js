@@ -128,7 +128,7 @@ router.get('/getBookById', (req, res) => {
 });
 // 创建书籍
 router.post('/createBook', jwt.verify, async (req, res) => {
-  let { title, content, type, category, url } = req.body || {};
+  let { title, content, type, category, url, description, image, share } = req.body || {};
   let userId = req._userId;
   let appId = req.headers.appid;
   if (!appId) {
@@ -158,7 +158,7 @@ router.post('/createBook', jwt.verify, async (req, res) => {
       break;
   }
   content = content || template;
-  Book.create({ title, content, author: userId, type, category, url, appId }).then((data) => {
+  Book.create({ title, content, author: userId, type, category, url, appId, description, image, share }).then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -187,7 +187,7 @@ router.post('/updateBook', jwt.verify, async (req, res) => {
   } else if (book.type === 'link' && !url) {
     return res.json({ success: false, message: '请填写链接地址！' })
   } else {
-    Book.findByIdAndUpdate(id, { $set: { title, category, url, content, anchors, updateTime: new Date(), description, image, share } }).exec().then((data) => {
+    Book.findByIdAndUpdate(id, { $set: { title, category, url, content, anchors, updateTime: new Date(), description, image, share }}, {new: true}).exec().then((data) => {
       if (data) {
         res.json({
           success: true,
@@ -207,7 +207,7 @@ router.post('/updateBookTitle', jwt.verify, (req, res) => {
   if (!id) {
     res.json({ success: false, message: '更新失败！' });
   };
-  Book.findByIdAndUpdate(id, { $set: { title, type, category } }).exec().then((data) => {
+  Book.findByIdAndUpdate(id, { $set: { title, type, category } }, {new: true} ).exec().then((data) => {
     if (data) {
       res.json({
         success: true,
@@ -291,10 +291,10 @@ router.get('/getDefaultAppBooks', jwt.verify, async(req, res) => {
       message: '没有找到默认应用！'
     })
   }
-  Book.find({ author: userId, appId: app._id }).select('title createTime type url appId image description').sort(sort)
+  Book.find({ author: userId, appId: app._id }).select('title createTime type url appId image description category').populate('category', 'name').sort(sort)
    .exec()
    .then(data => {
-     let books = data && data.length && data.map(({ _id, title, createTime, type, url, appId, image, description }) => {
+     let books = data && data.length && data.map(({ _id, title, createTime, type, url, appId, image, description, category }) => {
        return {
          _id,
          title,
@@ -303,7 +303,9 @@ router.get('/getDefaultAppBooks', jwt.verify, async(req, res) => {
          url,
          appId,
          image,
-         description
+         description,
+         category:  category && category._id,
+         categoryName: category && category.name
        }
      })
      res.json({
